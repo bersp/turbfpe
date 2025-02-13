@@ -4,6 +4,13 @@ part0_preanalysis = [
 	"calc_and_write_general_autovalues"
 ]
 
+part1_turbulence_analysis = [
+	"calc_turbulence_analysis_autovalues",
+	"plot_stationary",
+	"plot_pdf",
+	"plot_spectrum"
+]
+
 [config.io]
 save_path = "processed_data/"
 save_filenames_prefix = "Renner"
@@ -32,3 +39,17 @@ std = "!auto"
 skew = "!auto"
 kurtosis = "!auto"
 range = "!auto"
+
+
+# ---- PART 1: Turbulence analysis ---- # 
+[p1.plot_stationary]
+	# uses data and
+	data_split_percent = 5  # float from 0 to 100.
+
+[p1.plot_pdf]
+	# uses data and
+	nbins = "91!auto"  # int or auto (=general.nbins).
+
+[p1.plot_spectrum]
+	# uses data, general.fs and
+	moving_average_nbins = 3000  # int, auto (=10*general.nbins) or null.
