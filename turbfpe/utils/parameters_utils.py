@@ -86,7 +86,7 @@ class Params:
             pass
         else:
             raise ValueError(f"Data with shape {repr(data.shape)} is not compatible.")
-        
+
         if ignore_opts:
             return data
 
@@ -103,6 +103,19 @@ class Params:
 
         data = data / data_normalization
         return data
+
+    def format_output_filename(self, filename_raw):
+        """
+        return <config.io.save_path>/<config.io.save_filenames_prefix>_<fielaneme_raw>
+        """
+        return "".join(
+            [
+                self.read("config.io.save_path"),
+                self.read("config.io.save_filenames_prefix"),
+                "_",
+                filename_raw,
+            ]
+        )
 
     def __repr__(self):
         return pprint.pformat(dict(self.params), sort_dicts=False)
