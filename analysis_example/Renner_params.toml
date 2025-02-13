@@ -24,9 +24,9 @@ shape = "!auto"
 [general]
 fs = 8000.0  # float.
 nu = 15.32e-6  # float. def: kinematic vistosity.
-int_length = 0.0672 # 0.035482826276860564  # float or auto (from preanalysis).
-taylor_length = 0.0066  # float or auto (not implemented yet).
-kolmogorov_length = "!auto"  # float or auto (from preanalysis).
+int_scale = 0.0672 # 0.035482826276860564  # float or auto (from preanalysis).
+taylor_scale = 0.0066  # float or auto (not implemented yet).
+kolmogorov_scale = "!auto"  # float or auto (from preanalysis).
 kolmogorov_time = "!auto"  # float or auto (from preanalysis).
 epsilon = "!auto"  # float or auto (from preanalysis). def: mean disipation rate..
 taylor_hyp_vel = 2.25  # float or auto (not implemented yet). def: velocity to transform space to time.
@@ -48,7 +48,7 @@ range = "!auto"
 
 [p1.plot_pdf]
 	# uses data and
-	nbins = "91!auto"  # int or auto (=general.nbins).
+	nbins = "!auto"  # int or auto (=general.nbins).
 
 [p1.plot_spectrum]
 	# uses data, general.fs and

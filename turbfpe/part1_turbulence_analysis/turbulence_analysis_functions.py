@@ -106,7 +106,7 @@ def plot_spectrum(data, fs, ma_nbins):
     plt.show()
 
 
-def calc_taylor_length(data, fs, ma_nbins):
+def compute_taylor_scale(data, fs, ma_nbins):
     # calculate and plot energy spectrum
     esd = np.abs(np.fft.rfft(data, norm="backward")) ** 2 / (data.size * fs)
     f = fs / 2 * np.linspace(0, 1, int(data.size / 2))

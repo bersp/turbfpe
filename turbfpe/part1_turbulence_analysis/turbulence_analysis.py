@@ -2,7 +2,7 @@ import numpy as np
 
 from ..utils.parameters_utils import Params
 from .turbulence_analysis_functions import (
-    calc_taylor_length,
+    compute_taylor_scale,
     plot_pdf,
     plot_spectrum,
     plot_stationary,
@@ -18,7 +18,7 @@ def exec_rutine(params_file):
         func(data, params)
 
 
-def calc_turbulence_analysis_autovalues_params(data, params):
+def compute_turbulence_analysis_autovalues_params(data, params):
     if params.is_auto("general.nbins"):
         data_range = data.max() - data.min()
         data_std = np.std(data)
@@ -49,7 +49,7 @@ def plot_spectrum_params(data, params):
     return plot_spectrum(data, fs, ma_nbins)
 
 
-def calc_taylor_length_params(data, params):
+def compute_taylor_scale_params(data, params):
     fs = params.read("p1.general.fs")
-    ma_nbins = params.read("p1.calc_taylor_length.moving_average_nbins")
-    return calc_taylor_length(data, fs, ma_nbins)
+    ma_nbins = params.read("p1.compute_taylor_scale.moving_average_nbins")
+    return compute_taylor_scale(data, fs, ma_nbins)

@@ -4,7 +4,7 @@ import numpy as np
 from ..utils.general import logspace_moving_average
 
 
-def calc_int_length(data, fs):
+def compute_int_scale(data, fs):
     if data.size > int(1e5):
         data = data[: int(2 + 1e5)]
 
