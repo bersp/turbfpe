@@ -1,0 +1,34 @@
+[rutine]
+part0_preanalysis = [
+	"calc_and_write_data_stats",
+	"calc_and_write_general_autovalues"
+]
+
+[config.io]
+save_path = "processed_data/"
+save_filenames_prefix = "Renner"
+
+[data]
+io.path = "./Renner_8000Hz_filter.npy"  # str.
+opts.norm_data = true  # bool. Normalice data with sigma_inf.
+opts.flip_data = true  # bool or auto (not implemented yet).
+shape = "!auto"
+
+[general]
+fs = 8000.0  # float.
+nu = 15.32e-6  # float. def: kinematic vistosity.
+int_length = 0.0672 # 0.035482826276860564  # float or auto (from preanalysis).
+taylor_length = 0.0066  # float or auto (not implemented yet).
+kolmogorov_length = "!auto"  # float or auto (from preanalysis).
+kolmogorov_time = "!auto"  # float or auto (from preanalysis).
+epsilon = "!auto"  # float or auto (from preanalysis). def: mean disipation rate..
+taylor_hyp_vel = 2.25  # float or auto (not implemented yet). def: velocity to transform space to time.
+nbins = "!auto"  # int or auto (from preanalysis).
+
+[data.stats]
+mean = "!auto"
+rms = "!auto"
+std = "!auto"
+skew = "!auto"
+kurtosis = "!auto"
+range = "!auto"
