@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "turbfpe"
+version = "0.1"
+readme = "README.md"
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["turbfpe*"]
+exclude = []
+namespaces = false
