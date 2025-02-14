@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 import matplotlib.lines as lines
 import scipy.stats as stats
 
-from ..utils.mpl_utils import *
 from ..utils.general import get_pdf, logspace_moving_average
 
 
@@ -47,8 +46,8 @@ def plot_stationary(data, data_split_percent):
 def plot_pdf(data, nbins):
     fig, ax = plt.subplots(figsize=(6, 6))
 
-    ax.set_xlabel("u")
-    ax.set_ylabel("PDF")
+    ax.set_xlabel("$u$")
+    ax.set_ylabel(r"PDF")
 
     data_mean, data_std = np.mean(data), np.std(data)
     x, y = get_pdf(data, bins=nbins)
@@ -77,8 +76,8 @@ def plot_spectrum(data, fs, ma_nbins):
     ene = 2 * esd[1:]
 
     fig, ax = plt.subplots(figsize=(6, 6))
-    ax.set_xlabel("f")
-    ax.set_ylabel("E")
+    ax.set_xlabel(r"$f$")
+    ax.set_ylabel("$E(f)$")
 
     # plot raw data
     subsamp = np.logspace(0, np.log10(f.size), int(1e5)).astype(int)[:-1]
@@ -116,8 +115,8 @@ def compute_taylor_scale(data, fs, ma_nbins):
     ene = ene[1:]
 
     fig, ax = plt.subplots(figsize=(6, 6))
-    ax.set_xlabel("f")
-    ax.set_ylabel("E")
+    ax.set_xlabel("$f$")
+    ax.set_ylabel("$E$")
 
     # plot raw data
     subsamp = np.logspace(0, np.log10(f.size), int(1e5)).astype(int)
@@ -132,12 +131,12 @@ def compute_taylor_scale(data, fs, ma_nbins):
     # mean line and text
     mean_val = np.mean(ene[(f > 1) & (f < 10)])
     mean_line = ax.axhline(
-        mean_val, ls="-", color="C3", label="E(0) extrapolation", lw=2.5
+        mean_val, ls="-", color="C3", label="$E(0)$ extrapolation", lw=2.5
     )
     mean_text = ax.text(
         0.65,
         0.05,
-        f"E(0) = {mean_val:.2g}",
+        f"$E(0)$ = {mean_val:.2g}",
         transform=ax.transAxes,
         fontsize=14,
         va="center",

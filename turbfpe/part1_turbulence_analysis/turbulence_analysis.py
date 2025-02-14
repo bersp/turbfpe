@@ -1,5 +1,6 @@
 import numpy as np
 
+from ..utils.mpl_utils import mpl_setup
 from ..utils.parameters_utils import Params
 from .turbulence_analysis_functions import (
     compute_taylor_scale,
@@ -11,6 +12,9 @@ from .turbulence_analysis_functions import (
 
 def exec_rutine(params_file):
     params = Params(params_file)
+
+    mpl_setup(params)
+
     data = params.load_data(flat=True, ignore_opts=True)
 
     for func in params.read("rutine.part1_turbulence_analysis"):

@@ -1,13 +1,13 @@
-import os
-
-from .markov_functions import compute_wilcoxon_test, plot_wilcoxon_test
-
-from ..utils.mpl_utils import *
+from ..utils.mpl_utils import mpl_setup
 from ..utils.parameters_utils import Params
+from .markov_functions import compute_wilcoxon_test, plot_wilcoxon_test
 
 
 def exec_rutine(params_file):
     params = Params(params_file)
+
+    mpl_setup(params)
+
     data = params.load_data()
 
     for func in params.read("rutine.part2_markov"):

@@ -89,6 +89,8 @@ def plot_wilcoxon_test(filename, EM_scale):
     for ax in (ax1, ax2):
         ax.axhline(1, c="k")
         ax.axvline(EM_scale, c="k", ls="--")
+        ax.set_xlabel(r"$\Delta$ [samp]")
+        ax.set_ylabel("Wilcoxon-Test")
     ax1.semilogy(delta_arr, wt_arr, "o")
     ax2.loglog(delta_arr, wt_arr, "o")
     plt.show()
