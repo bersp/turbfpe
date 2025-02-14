@@ -156,14 +156,18 @@ class DataClassGroup(Generic[T]):
     def add(self, item: T) -> None:
         self._items.append(item)
 
-    def __getitem__(self, index: int) -> T:
-        return self._items[index]
+    def unpack(self, attr_name: str) -> np.ndarray:
+        """
+        Extracts and returns a NumPy array containing the values of the specified attribute
+        from all dataclass instances in the group.
 
-    def __iter__(self):
-        return iter(self._items)
+        Args:
+            attr_name (str): The name of the attribute to extract (e.g. "D1").
 
-    def __len__(self) -> int:
-        return len(self._items)
+        Returns:
+            np.ndarray: A NumPy array composed of the values of the specified attribute.
+        """
+        return np.array([getattr(item, attr_name) for item in self._items])
 
     def write_npz(self, filename: str) -> None:
         """
@@ -207,6 +211,15 @@ class DataClassGroup(Generic[T]):
             instance = constructor(fields)
             group.add(instance)
         return group
+
+    def __getitem__(self, index: int) -> T:
+        return self._items[index]
+
+    def __iter__(self):
+        return iter(self._items)
+
+    def __len__(self) -> int:
+        return len(self._items)
 
 
 class ConditionalMomentsGroup(DataClassGroup[ConditionalMoments]):

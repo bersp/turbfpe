@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib.pyplot as plt
+
 from turbfpe.utils.storing_clases import (
     ConditionalMomentsGroup,
     DensityFunctionsGroup,
@@ -26,7 +28,7 @@ def compute_km_coeffs_estimation(
     steps_normlalization_const_us = taylor_scale * fs / taylor_hyp_vel
     steps_us = steps_con_moment_us / steps_normlalization_const_us
 
-    kmcoeffs_est_group = KMCoeffsEstimationGroup()
+    km_coeffs_est_group = KMCoeffsEstimationGroup()
     for idx, cond_moments in enumerate(cond_moments_group):
         # Preallocate arrays for coefficients and error estimates per bin
         D1 = np.full(nbins, np.nan)
@@ -124,33 +126,83 @@ def compute_km_coeffs_estimation(
             D1_opti=np.array([]),  # Optimized coefficients not computed here
             D2_opti=np.array([]),
         )
-        kmcoeffs_est_group.add(km_instance)
+        km_coeffs_est_group.add(km_instance)
 
-    return kmcoeffs_est_group
+    return km_coeffs_est_group
 
 
-if __name__ == "__main__":
-    cond_moments_group = ConditionalMomentsGroup.from_npz(
-        "./processed_data/estimated_conditional_moments.npz"
+def km_coeffs_estimation_plot(
+    km_coeffs_est_group, density_funcs_group, nbins, taylor_scale, min_events
+):
+    n_scales_steps = len(km_coeffs_est_group)
+
+    counts1 = density_funcs_group.unpack("counts1")
+    u_incs = density_funcs_group.unpack("mean_per_bin0")
+    D1 = km_coeffs_est_group.unpack("D1")
+    D2 = km_coeffs_est_group.unpack("D2")
+    D3 = km_coeffs_est_group.unpack("D3")
+    D4 = km_coeffs_est_group.unpack("D4")
+
+    scales_1d = km_coeffs_est_group.unpack("scale")/taylor_scale
+    scales = np.ones_like(D1)*np.nan
+
+    valid_idxs = (counts1[0] > min_events) & ~np.isnan(D1[0])
+    u_incs[:, ~valid_idxs] = np.nan
+    D1[:, ~valid_idxs] = np.nan
+    D2[:, ~valid_idxs] = np.nan
+    D3[:, ~valid_idxs] = np.nan
+    D4[:, ~valid_idxs] = np.nan
+    scales[:, valid_idxs] = scales_1d[:, None]
+
+    def scatter_3d(x, y, z, x_label, y_label, z_label):
+        x_flat = x.flatten()
+        y_flat = y.flatten()
+        z_flat = z.flatten()
+        mask = ~np.isnan(x_flat) & ~np.isnan(y_flat) & ~np.isnan(z_flat)
+        fig = plt.figure(figsize=(6, 6))
+        ax = fig.add_subplot(111, projection="3d")
+        ax.scatter(
+            x_flat[mask],
+            y_flat[mask],
+            z_flat[mask],
+            c="k",
+            ec="white",
+            s=30,
+            lw=0.5,
+            alpha=0.5,
+        )
+        ax.invert_yaxis()
+        ax.set_xlabel(x_label)
+        ax.set_ylabel(y_label)
+        ax.set_zlabel(z_label)
+
+    x_label = r"$u_r / \sigma_\infty$"
+    y_label = r"$r / \lambda$"
+
+    scatter_3d(
+        u_incs,
+        scales,
+        (D2**2) / D4,
+        x_label,
+        y_label,
+        r"$(D^{(2)})^2 / D^{(4)}$",
     )
-    density_funcs_group = DensityFunctionsGroup.from_npz(
-        "./processed_data/density_functions.npz"
+
+    scatter_3d(
+        u_incs,
+        scales,
+        D4 / (D2**2),
+        x_label,
+        y_label,
+        r"$D^{(4)} / (D^{(2)})^2$",
     )
 
-    markov_scale_us = 22
-    fs = 8000
-    taylor_scale = 0.0067
-    inc_bin = 93
-    taylor_hyp_vel = 2.2499926832892565
+    scatter_3d(u_incs, scales, D4, x_label, y_label, r"$D^{(4)}$")
 
-    kmcoeffs_est_group = compute_km_coeffs_estimation(
-        nbins=inc_bin,
-        min_events=400,
-        cond_moments_group=cond_moments_group,
-        density_funcs_group=density_funcs_group,
-        steps_con_moment_us=steps_con_moment_us,
-        fs=fs,
-        taylor_scale=taylor_scale,
-        taylor_hyp_vel=taylor_hyp_vel,
-    )
-    kmcoeffs_est_group.write("./processed_data/KMCoeffsEstimation.npz")
+    scatter_3d(u_incs, scales, D3, x_label, y_label, r"$D^{(3)}$")
+
+    scatter_3d(u_incs, scales, D2, x_label, y_label, r"$D^{(2)}$")
+
+    scatter_3d(u_incs, scales, D1, x_label, y_label, r"$D^{(1)}$")
+
+    plt.show()

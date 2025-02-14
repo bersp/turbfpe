@@ -1,12 +1,19 @@
 import numpy as np
 
-from turbfpe.utils.storing_clases import ConditionalMomentsGroup, DensityFunctionsGroup
+from turbfpe.utils.storing_clases import (
+    ConditionalMomentsGroup,
+    DensityFunctionsGroup,
+    KMCoeffsEstimationGroup,
+)
 
 from ..utils.mpl_utils import mpl_setup
 from ..utils.parameters_utils import Params
 from .conditional_moments_estimation import compute_conditional_moments_estimation
 from .wilcoxon_test import compute_wilcoxon_test, plot_wilcoxon_test
-from .km_coeffs_estimation import compute_km_coeffs_estimation
+from .km_coeffs_estimation import (
+    compute_km_coeffs_estimation,
+    km_coeffs_estimation_plot,
+)
 
 
 def exec_rutine(params_file):
@@ -121,7 +128,7 @@ def compute_km_coeffs_estimation_params(_, params):
     taylor_hyp_vel = params.read("general.taylor_hyp_vel")
     nbins = params.read("p2.general.nbins")
 
-    km_coeffs_estimation = compute_km_coeffs_estimation(
+    km_coeffs_est_group = compute_km_coeffs_estimation(
         cond_moments_group,
         density_funcs_group,
         fs,
@@ -131,6 +138,24 @@ def compute_km_coeffs_estimation_params(_, params):
         taylor_hyp_vel,
     )
 
-    km_coeffs_estimation.write_npz(
-        params.format_output_filename("km_coeffs_estimation.npz")
+    km_coeffs_est_group.write_npz(
+        params.format_output_filename("km_coeffs_est.npz")
+    )
+
+
+def km_coeffs_estimation_plot_params(_, params):
+    km_coeffs_est_group = KMCoeffsEstimationGroup.load_npz(
+        params.format_output_filename("km_coeffs_est.npz")
+    )
+
+    density_funcs_group = DensityFunctionsGroup.load_npz(
+        params.format_output_filename("density_functions.npz")
+    )
+
+    nbins = params.read("p2.general.nbins")
+    taylor_scale = params.read("general.taylor_scale")
+    min_events = params.read("p2.general.min_events")
+
+    km_coeffs_estimation_plot(
+        km_coeffs_est_group, density_funcs_group, nbins, taylor_scale, min_events
     )
