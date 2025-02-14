@@ -113,7 +113,7 @@ class KMCoeffs:
         d22 = self.a22 * (r**self.b22) + self.c22
         return d20 + d21 * u + d22 * (u**2)
 
-    def write(self, filename: str) -> None:
+    def write_npz(self, filename: str) -> None:
         """
         Writes all dataclass items to a .npz file.
         """
@@ -121,7 +121,7 @@ class KMCoeffs:
         np.savez(filename, **data_to_save)
 
     @classmethod
-    def from_npz(cls, filename: str) -> "KMCoeffs":
+    def load_npz(cls, filename: str) -> "KMCoeffs":
         """
         Loads a KMCoeffs instance from a .npz file.
         """
@@ -165,7 +165,7 @@ class DataClassGroup(Generic[T]):
     def __len__(self) -> int:
         return len(self._items)
 
-    def write(self, filename: str) -> None:
+    def write_npz(self, filename: str) -> None:
         """
         Writes all dataclass items to a .npz file.
         Each item is enumerated with keys like "0_field", "1_field", etc.
@@ -193,7 +193,7 @@ class DataClassGroup(Generic[T]):
         return raw_groups
 
     @classmethod
-    def from_npz(
+    def load_npz(
         cls, filename: str, constructor: Callable[[Dict[str, Any]], T]
     ) -> "DataClassGroup[T]":
         """
@@ -215,14 +215,14 @@ class ConditionalMomentsGroup(DataClassGroup[ConditionalMoments]):
     """
 
     @classmethod
-    def from_npz(cls, filename: str) -> "ConditionalMomentsGroup":
+    def load_npz(cls, filename: str) -> "ConditionalMomentsGroup":
         def constructor(fields: Dict[str, Any]) -> ConditionalMoments:
             # Convert scalar fields
             for key in ("scale", "scale_us", "scale_short_us"):
                 fields[key] = _maybe_extract_scalar(fields[key])
             return ConditionalMoments(**fields)
 
-        return super().from_npz(filename, constructor)
+        return super().load_npz(filename, constructor)
 
 
 class DensityFunctionsGroup(DataClassGroup[DensityFunctions]):
@@ -231,7 +231,7 @@ class DensityFunctionsGroup(DataClassGroup[DensityFunctions]):
     """
 
     @classmethod
-    def from_npz(cls, filename: str) -> "DensityFunctionsGroup":
+    def load_npz(cls, filename: str) -> "DensityFunctionsGroup":
         def constructor(fields: Dict[str, Any]) -> DensityFunctions:
             for key in (
                 "scale",
@@ -243,7 +243,7 @@ class DensityFunctionsGroup(DataClassGroup[DensityFunctions]):
                 fields[key] = _maybe_extract_scalar(fields[key])
             return DensityFunctions(**fields)
 
-        return super().from_npz(filename, constructor)
+        return super().load_npz(filename, constructor)
 
 
 class KMCoeffsEstimationGroup(DataClassGroup[KMCoeffsEstimation]):
@@ -252,10 +252,10 @@ class KMCoeffsEstimationGroup(DataClassGroup[KMCoeffsEstimation]):
     """
 
     @classmethod
-    def from_npz(cls, filename: str) -> "KMCoeffsEstimationGroup":
+    def load_npz(cls, filename: str) -> "KMCoeffsEstimationGroup":
         def constructor(fields: Dict[str, Any]) -> KMCoeffsEstimation:
             for key in ("scale", "scale_us", "scale_short_us"):
                 fields[key] = _maybe_extract_scalar(fields[key])
             return KMCoeffsEstimation(**fields)
 
-        return super().from_npz(filename, constructor)
+        return super().load_npz(filename, constructor)

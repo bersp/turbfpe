@@ -1,6 +1,48 @@
 import numpy as np
 
-SQRT_2_DIV_PI = np.sqrt(2 / np.pi)
+
+def calc_incs_1tau(v, tau):
+    """v.shape = (n, time)"""
+
+    tsize = v.shape[1]
+    inc = v[:, tau:tsize] - v[:, 0 : tsize - tau]
+    return inc.flatten()
+
+
+def calc_incs_2tau(v, tau0, tau1):
+    """
+    v.shape = (n, time)
+    tau0 > tau1
+    """
+    tsize = v.shape[1]
+
+    d_01 = tau0 - tau1
+
+    inc0 = v[:, tau0:tsize] - v[:, 0 : tsize - tau0]
+    inc1 = v[:, tau1 : tsize - d_01] - v[:, 0 : tsize - tau0]
+
+    inc0, inc1 = inc0.flatten(), inc1.flatten()
+
+    return inc0, inc1
+
+
+def calc_incs_3tau(v, tau0, tau1, tau2):
+    """
+    v.shape = (n, time)
+    tau0 > tau1 > tau2
+    """
+    tsize = v.shape[1]
+
+    d_01 = tau0 - tau1
+    d_02 = tau0 - tau2
+
+    inc0 = v[:, tau0:tsize] - v[:, 0 : tsize - tau0]
+    inc1 = v[:, tau1 : tsize - d_01] - v[:, 0 : tsize - tau0]
+    inc2 = v[:, tau2 : tsize - d_02] - v[:, 0 : tsize - tau0]
+
+    inc0, inc1, inc2 = inc0.flatten(), inc1.flatten(), inc2.flatten()
+
+    return inc0, inc1, inc2
 
 
 def calculate_indep_incr_square_data(data, start_interv_sec, delta):
@@ -41,56 +83,6 @@ def calculate_indep_incr_non_square_data(data, start_interv_sec, delta):
     inc0, inc1, inc2 = inc0.flatten(), inc1.flatten(), inc2.flatten()
 
     return inc0, inc1, inc2
-
-
-def wilcoxon_test(p1, p2):
-    """
-    Test if p(df)1 it is statistically distributed as p(df)2.
-    """
-    m = p1.size
-    n = p2.size
-
-    sp1 = np.sort(p1)
-    sp2 = np.sort(p2)
-
-    # Q = np.sum(sp2[:, np.newaxis] > sp1) is faster but memory inefficient
-    Q = 0
-    for val2 in sp2:
-        Q += np.sum(val2 > sp1)
-
-    Q_mean = n * m / 2
-    Q_sigma = np.sqrt(n * m * (n + m + 1) / 12)
-    T = np.abs(Q - Q_mean) / (Q_sigma * SQRT_2_DIV_PI)
-
-    return T
-
-
-def wilcoxon_test_multiple_bins(inc1, inc2, bins1, idx_c0):
-    T_list = []
-    for b1 in bins1:
-        # - P(u_2|u_1) i.e. inc2 only where inc1 belongs to the nth bin
-        idx_c1 = (inc1 > b1[0]) & (inc1 < b1[1])
-        inc2_c1 = inc2[idx_c1]
-
-        # - P(u_2|u_1,u_0=0)
-        inc2_c1_c0 = inc2[idx_c1 & idx_c0]
-
-        if inc2_c1.size > 40_000:  # we don't need that much data
-            inc2_c1 = np.random.choice(inc2_c1, 40_000, replace=False)
-        elif (
-            inc2_c1.size < 30
-        ):  # we need that much data (to be sure that we have enough data to calculate mean and have a Gaussian behaviour)
-            continue  # skip this bin
-
-        if inc2_c1_c0.size > 20_000:
-            inc2_c1_c0 = np.random.choice(inc2_c1_c0, 20_000, replace=False)
-        elif inc2_c1_c0.size < 30:
-            continue
-
-        # - test if P(u_2|u_1,u_0=0) is compatible with P(u_2|u_1)
-        T = wilcoxon_test(inc2_c1, inc2_c1_c0)
-        T_list.append(T)
-    return np.mean(T_list)
 
 
 def distribution(x_data, y_data, num_bin):

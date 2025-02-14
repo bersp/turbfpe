@@ -2,16 +2,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
 
-from ..utils.mpl_utils import *
 from .markov_auxiliar_functions import (
     calculate_indep_incr_non_square_data,
     calculate_indep_incr_square_data,
-    wilcoxon_test_multiple_bins,
 )
 
 
+SQRT_2_DIV_PI = np.sqrt(2 / np.pi)
+
+
 def compute_wilcoxon_test(
-    data, fs, nbins, taylor_hyp_vel, indep_scale, n_interv_sec=1, output_filename=None
+    data, fs, nbins, taylor_hyp_vel, indep_scale, n_interv_sec=1
 ):
     # number of statistically independent intervals
     indep_scale_us = round(fs * indep_scale / taylor_hyp_vel)
@@ -75,11 +76,60 @@ def compute_wilcoxon_test(
             tmp = wilcoxon_test_multiple_bins(inc1, inc2, bins1, idx_c0)
             wt_arr[jj, ii] = tmp
 
-    if output_filename:
-        np.save(output_filename, np.vstack((delta_arr, wt_arr)))
+    return delta_arr, wt_arr
 
 
-def plot_wilcoxon_test(filename, EM_scale):
+def wilcoxon_test_2samp(p1, p2):
+    """
+    Test if p(df)1 it is statistically distributed as p(df)2.
+    """
+    m = p1.size
+    n = p2.size
+
+    sp1 = np.sort(p1)
+    sp2 = np.sort(p2)
+
+    # Q = np.sum(sp2[:, np.newaxis] > sp1) is faster but memory inefficient
+    Q = 0
+    for val2 in sp2:
+        Q += np.sum(val2 > sp1)
+
+    Q_mean = n * m / 2
+    Q_sigma = np.sqrt(n * m * (n + m + 1) / 12)
+    T = np.abs(Q - Q_mean) / (Q_sigma * SQRT_2_DIV_PI)
+
+    return T
+
+
+def wilcoxon_test_multiple_bins(inc1, inc2, bins1, idx_c0):
+    T_list = []
+    for b1 in bins1:
+        # - P(u_2|u_1) i.e. inc2 only where inc1 belongs to the nth bin
+        idx_c1 = (inc1 > b1[0]) & (inc1 < b1[1])
+        inc2_c1 = inc2[idx_c1]
+
+        # - P(u_2|u_1,u_0=0)
+        inc2_c1_c0 = inc2[idx_c1 & idx_c0]
+
+        if inc2_c1.size > 40_000:  # we don't need that much data
+            inc2_c1 = np.random.choice(inc2_c1, 40_000, replace=False)
+        elif (
+            inc2_c1.size < 30
+        ):  # we need that much data (to be sure that we have enough data to calculate mean and have a Gaussian behaviour)
+            continue  # skip this bin
+
+        if inc2_c1_c0.size > 20_000:
+            inc2_c1_c0 = np.random.choice(inc2_c1_c0, 20_000, replace=False)
+        elif inc2_c1_c0.size < 30:
+            continue
+
+        # - test if P(u_2|u_1,u_0=0) is compatible with P(u_2|u_1)
+        T = wilcoxon_test_2samp(inc2_c1, inc2_c1_c0)
+        T_list.append(T)
+    return np.mean(T_list)
+
+
+def plot_wilcoxon_test(filename, markov_scale):
     # TODO: Improve plot and add options to see this in different units
     delta_arr, *wt_arr = np.load(filename)
     wt_arr = np.mean(wt_arr, axis=0)
@@ -88,7 +138,7 @@ def plot_wilcoxon_test(filename, EM_scale):
 
     for ax in (ax1, ax2):
         ax.axhline(1, c="k")
-        ax.axvline(EM_scale, c="k", ls="--")
+        ax.axvline(markov_scale, c="k", ls="--")
         ax.set_xlabel(r"$\Delta$ [samp]")
         ax.set_ylabel("Wilcoxon-Test")
     ax1.semilogy(delta_arr, wt_arr, "o")
