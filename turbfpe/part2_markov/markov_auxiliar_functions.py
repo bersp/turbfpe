@@ -45,7 +45,7 @@ def calc_incs_3tau(v, tau0, tau1, tau2):
     return inc0, inc1, inc2
 
 
-def calculate_indep_incr_square_data(data, start_interv_sec, delta):
+def compute_indep_incs_square_data(data, start_interv_sec, delta):
     # avoid index out of range
     start_interv_sec = start_interv_sec[start_interv_sec + 3 * delta < data.shape[1]]
     data_start_intervals = data[:, start_interv_sec]
@@ -58,7 +58,7 @@ def calculate_indep_incr_square_data(data, start_interv_sec, delta):
     return inc0, inc1, inc2
 
 
-def calculate_indep_incr_non_square_data(data, start_interv_sec, delta):
+def compute_indep_incs_non_square_data(data, start_interv_sec, delta):
     # avoid index out of range
     start_interv_sec = start_interv_sec[start_interv_sec + 3 * delta < data.shape[1]]
     data_start_intervals = data[:, start_interv_sec]
@@ -85,9 +85,9 @@ def calculate_indep_incr_non_square_data(data, start_interv_sec, delta):
     return inc0, inc1, inc2
 
 
-def distribution(x_data, y_data, num_bin):
+def distribution(x_data, y_data, bins):
     # Compute the 2D histogram (counts) using the defined bins
-    counts, bin_x_edges, bin_y_edges = np.histogram2d(x_data, y_data, bins=num_bin)
+    counts, bin_x_edges, bin_y_edges = np.histogram2d(x_data, y_data, bins=bins)
     counts = counts.astype(int)
 
     bin_x_width = bin_x_edges[1] - bin_x_edges[0]
@@ -133,14 +133,69 @@ def distribution(x_data, y_data, num_bin):
 
 
 def compute_mean_values_per_bin(data, counts, bin_edges):
-    num_bin = bin_edges.size - 1
+    bins = bin_edges.size - 1
 
     indices = np.digitize(data, bin_edges) - 1  # Convert to 0-based index
-    indices = np.clip(indices, 0, num_bin - 1)
-    sums = np.bincount(indices, weights=data, minlength=num_bin)
+    indices = np.clip(indices, 0, bins - 1)
+    sums = np.bincount(indices, weights=data, minlength=bins)
 
     mean_per_bin = np.full(sums.shape, np.nan)
     idx = counts != 0
     mean_per_bin[idx] = sums[idx] / counts[idx]
 
     return mean_per_bin
+
+
+def get_Di_for_all_incs_and_scales(
+    density_funcs_group,
+    km_coeffs_group,
+    bins: int,
+    taylor_scale: float,
+    use_Di_opti=True,
+):
+    """
+    Creates the matrices:
+       u_matrix, scale_matrix, D1_mat, D1_err_mat, D2_mat, D2_err_mat
+    """
+    n_scales = len(km_coeffs_group)
+
+    # Preallocate
+    u_matrix = np.full((n_scales, bins), np.nan)
+    scale_matrix = np.full((n_scales, bins), np.nan)
+    D1_mat = np.full((n_scales, bins), np.nan)
+    D1_err_mat = np.full((n_scales, bins), np.nan)
+    D2_mat = np.full((n_scales, bins), np.nan)
+    D2_err_mat = np.full((n_scales, bins), np.nan)
+
+    for i, (dens_funcs, km_est) in enumerate(zip(density_funcs_group, km_coeffs_group)):
+        # valid_idxs = km_est.valid_idxs
+        valid_idxs = km_est.valid_idxs
+
+        count_valid = np.sum(valid_idxs)
+
+        # fill U and scale
+        u_matrix[i, :count_valid] = dens_funcs.mean_per_bin0[valid_idxs]
+        scale_matrix[i, :count_valid] = km_est.scale / taylor_scale
+
+        # choose which fields to extract (optimized vs non-optimized)
+        if use_Di_opti:
+            D1 = km_est.D1_opti
+            D2 = km_est.D2_opti
+        else:
+            D1 = km_est.D1[valid_idxs]
+            D2 = km_est.D2[valid_idxs]
+
+        # fill D1, D2, and their errors
+        D1_mat[i, :count_valid] = D1
+        D1_err_mat[i, :count_valid] = km_est.D1_err[valid_idxs]
+        D2_mat[i, :count_valid] = D2
+        D2_err_mat[i, :count_valid] = km_est.D2_err[valid_idxs]
+
+    return (
+        u_matrix,
+        scale_matrix,
+        D1_mat,
+        D1_err_mat,
+        D2_mat,
+        D2_err_mat,
+    )

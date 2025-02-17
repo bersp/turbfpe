@@ -3,8 +3,8 @@ import numpy as np
 from tqdm import tqdm
 
 from .markov_auxiliar_functions import (
-    calculate_indep_incr_non_square_data,
-    calculate_indep_incr_square_data,
+    compute_indep_incs_non_square_data,
+    compute_indep_incs_square_data,
 )
 
 
@@ -53,11 +53,11 @@ def compute_wilcoxon_test(
             # at different independent intervals.
 
             if data_is_square:
-                inc0, inc1, inc2 = calculate_indep_incr_square_data(
+                inc0, inc1, inc2 = compute_indep_incs_square_data(
                     data, start_interv_sec, delta
                 )
             else:
-                inc0, inc1, inc2 = calculate_indep_incr_non_square_data(
+                inc0, inc1, inc2 = compute_indep_incs_non_square_data(
                     data, start_interv_sec, delta
                 )
 
