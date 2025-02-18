@@ -11,13 +11,11 @@ def mpl_setup(params=None):
         usetex_flag = False
         constrained_layout_flag = False
 
-    mpl.rcParams.update(
-        {
-            "text.usetex": usetex_flag,
-            "text.latex.preamble": r"\usepackage{amsmath}",
-            "figure.constrained_layout.use": constrained_layout_flag,
-        }
-    )
+    mpl.rcParams.update({
+        "text.usetex": usetex_flag,
+        "text.latex.preamble": r"\usepackage{amsmath}",
+        "figure.constrained_layout.use": constrained_layout_flag,
+    })
 
     mpl.rc("legend", fancybox=False)
 
@@ -49,14 +47,12 @@ def save_fig(filename):
 
 def add_horizontal_slider(ax, y_distance=0.0, **slider_kwargs):
     def xaligned_axes(ax, y_distance, width):
-        return plt.axes(
-            [
-                ax.get_position().x0,
-                ax.get_position().y1 + y_distance,
-                ax.get_position().width,
-                width,
-            ]
-        )
+        return plt.axes([
+            ax.get_position().x0,
+            ax.get_position().y1 + y_distance,
+            ax.get_position().width,
+            width,
+        ])
 
     slider_ax = xaligned_axes(ax=ax, y_distance=y_distance, width=0.03)
     slider = Slider(ax=slider_ax, **slider_kwargs)
@@ -66,14 +62,12 @@ def add_horizontal_slider(ax, y_distance=0.0, **slider_kwargs):
 
 def add_vertical_slider(ax, x_distance=0.0, **slider_kwargs):
     def yaligned_axes(ax, x_distance, width):
-        return plt.axes(
-            [
-                ax.get_position().x1 + x_distance,
-                ax.get_position().y0,
-                width,
-                ax.get_position().height,
-            ]
-        )
+        return plt.axes([
+            ax.get_position().x1 + x_distance,
+            ax.get_position().y0,
+            width,
+            ax.get_position().height,
+        ])
 
     slider_ax = yaligned_axes(ax=ax, x_distance=x_distance, width=0.03)
     slider = Slider(ax=slider_ax, orientation="vertical", **slider_kwargs)

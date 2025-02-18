@@ -1,7 +1,6 @@
 import numpy as np
 from tqdm import tqdm
 
-from ..utils.parameters_utils import Params
 from ..utils.storing_clases import (
     ConditionalMoments,
     ConditionalMomentsGroup,

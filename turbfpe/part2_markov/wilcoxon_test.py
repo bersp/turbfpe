@@ -180,7 +180,7 @@ def _plot_pdf_on_markov_scale(ax, data, markov_scale_us, u0):
     ax.set_xlim(-2, 2)
     ax.set_ylim(-1.5, 1.6)
 
-    c_2I1 = ax.contour(X, Y, P_2I1, levels=levels, cmap="gray_r", linewidths=2)
+    ax.contour(X, Y, P_2I1, levels=levels, cmap="gray_r", linewidths=2)
 
     # -- P(u_2|u_1,u_0)
     idx = (incs0 > u0 - dx / 2) & (incs0 < u0 + dx / 2)
@@ -192,7 +192,7 @@ def _plot_pdf_on_markov_scale(ax, data, markov_scale_us, u0):
     P_2I1I0[:, (counts1I0 < 400 // 5)] = np.nan
     P_2I1I0 = np.clip(P_2I1I0, None, 5 * np.nanstd(P_2I1I0))
 
-    c_2I1I0 = ax.contour(X, Y, P_2I1I0, levels=levels, cmap="Reds", linewidths=2)
+    ax.contour(X, Y, P_2I1I0, levels=levels, cmap="Reds", linewidths=2)
 
     # legend
     legend_elements = [
