@@ -1,19 +1,19 @@
+from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
 
 from .markov_auxiliar_functions import (
+    calc_incs_3tau,
     compute_indep_incs_non_square_data,
     compute_indep_incs_square_data,
+    distribution,
 )
-
 
 SQRT_2_DIV_PI = np.sqrt(2 / np.pi)
 
 
-def compute_wilcoxon_test(
-    data, fs, nbins, taylor_hyp_vel, indep_scale, n_interv_sec=1
-):
+def compute_wilcoxon_test(data, fs, nbins, taylor_hyp_vel, indep_scale, n_interv_sec=1):
     # number of statistically independent intervals
     indep_scale_us = round(fs * indep_scale / taylor_hyp_vel)
     n_interv = data.shape[1] // indep_scale_us - 1
@@ -129,18 +129,74 @@ def wilcoxon_test_multiple_bins(inc1, inc2, bins1, idx_c0):
     return np.mean(T_list)
 
 
-def plot_wilcoxon_test(filename, markov_scale):
+def plot_wilcoxon_test(data, filename, markov_scale_us):
     # TODO: Improve plot and add options to see this in different units
     delta_arr, *wt_arr = np.load(filename)
     wt_arr = np.mean(wt_arr, axis=0)
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
 
-    for ax in (ax1, ax2):
-        ax.axhline(1, c="k")
-        ax.axvline(markov_scale, c="k", ls="--")
-        ax.set_xlabel(r"$\Delta$ [samp]")
-        ax.set_ylabel("Wilcoxon-Test")
-    ax1.semilogy(delta_arr, wt_arr, "o")
-    ax2.loglog(delta_arr, wt_arr, "o")
+    ax1.axhline(1, c="k")
+    ax1.axvline(markov_scale_us, c="C3", ls="--", lw=2, label=r"$\Delta_\text{EM}$")
+    ax1.set_xlabel(r"$\Delta$ [samp]")
+    ax1.set_ylabel("Wilcoxon-Test")
+    ax1.loglog(delta_arr, wt_arr, "ok")
+    ax1.legend()
+
+    _plot_pdf_on_markov_scale(ax2, data, markov_scale_us, u0=-1)
+
     plt.show()
+
+
+def _plot_pdf_on_markov_scale(ax, data, markov_scale_us, u0):
+    incs0, incs1, incs2 = calc_incs_3tau(
+        data, 3 * markov_scale_us, 2 * markov_scale_us, markov_scale_us
+    )
+
+    P_2I1, *_, bin_x_edges, bin_y_edges, dx, dy, _, counts1 = distribution(
+        incs2, incs1, bins=150
+    )
+
+    P_2I1[:, counts1 < 400] = np.nan
+    P_2I1 = np.clip(P_2I1, None, 5 * np.nanstd(P_2I1))
+
+    x = bin_x_edges[:-1] + dx
+    y = bin_y_edges[:-1] + dy
+    X, Y = np.meshgrid(x, y)
+
+    levels = (
+        np.round(
+            np.logspace(
+                np.log10(0.01 * np.nanmax(P_2I1) * 1e6),
+                np.log10(0.90 * np.nanmax(P_2I1) * 1e6),
+                10,
+            )
+        )
+        / 1e6
+    )
+
+    ax.set_xlabel(r"$u_{\tau_1=2\Delta_{EM}}$")
+    ax.set_ylabel(r"$u_{\tau_2=\Delta_{EM}}$")
+    ax.set_xlim(-2, 2)
+    ax.set_ylim(-1.5, 1.6)
+
+    c_2I1 = ax.contour(X, Y, P_2I1, levels=levels, cmap="gray_r", linewidths=2)
+
+    # -- P(u_2|u_1,u_0)
+    idx = (incs0 > u0 - dx / 2) & (incs0 < u0 + dx / 2)
+    incs2I0, incs1I0 = incs2[idx], incs1[idx]
+
+    P_2I1I0, *_, counts1I0 = distribution(
+        incs2I0, incs1I0, bins=[bin_x_edges, bin_y_edges]
+    )
+    P_2I1I0[:, (counts1I0 < 400 // 5)] = np.nan
+    P_2I1I0 = np.clip(P_2I1I0, None, 5 * np.nanstd(P_2I1I0))
+
+    c_2I1I0 = ax.contour(X, Y, P_2I1I0, levels=levels, cmap="Reds", linewidths=2)
+
+    # legend
+    legend_elements = [
+        Line2D([0], [0], color="k", lw=3, label="$P(u_2|u_1)$"),
+        Line2D([0], [0], color="C3", lw=3, label="$P(u_2|u_1|u_0=-1)$"),
+    ]
+    ax.legend(handles=legend_elements)
