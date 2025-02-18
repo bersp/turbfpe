@@ -1,15 +1,13 @@
-from matplotlib.lines import Line2D
-import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.lines import Line2D
 
-from .markov_auxiliar_functions import get_Di_for_all_incs_and_scales
 from .km_coeffs_estimation_stp_opti import short_time_prop
+from .markov_auxiliar_functions import get_Di_for_all_incs_and_scales
 
 
-def plot_km_coeffs_estimation(
-    km_coeffs_est_group, density_funcs_group, nbins, taylor_scale
-):
+def plot_km_coeffs_estimation(km_coeffs_est_group, density_funcs_group, taylor_scale):
     u_incs = density_funcs_group.unpack("mean_per_bin0")
     D1 = km_coeffs_est_group.unpack("D1")
     D2 = km_coeffs_est_group.unpack("D2")
@@ -31,10 +29,12 @@ def plot_km_coeffs_estimation(
     y_label = r"$s / \lambda$"
 
     fig, axs = plt.subplots(2, 3, subplot_kw={"projection": "3d"}, figsize=(18, 9))
-    scatter_3d(axs[0, 0], u_incs, scales, D1, x_label, y_label, r"$D^{(1)}$")
-    scatter_3d(axs[0, 1], u_incs, scales, D2, x_label, y_label, r"$D^{(2)}$")
-    scatter_3d(axs[1, 0], u_incs, scales, D4, x_label, y_label, r"$D^{(4)}$")
-    scatter_3d(axs[1, 1], u_incs, scales, D3, x_label, y_label, r"$D^{(3)}$")
+    for ax in axs.flat:
+        ax.invert_yaxis()
+    scatter_3d(axs[0, 0], u_incs, scales, D1, x_label, y_label, r"$D^{(1)}$", alpha=0.4)
+    scatter_3d(axs[0, 1], u_incs, scales, D2, x_label, y_label, r"$D^{(2)}$", alpha=0.4)
+    scatter_3d(axs[1, 0], u_incs, scales, D4, x_label, y_label, r"$D^{(4)}$", alpha=0.4)
+    scatter_3d(axs[1, 1], u_incs, scales, D3, x_label, y_label, r"$D^{(3)}$", alpha=0.4)
 
     scatter_3d(
         axs[0, 2],
@@ -44,6 +44,7 @@ def plot_km_coeffs_estimation(
         x_label,
         y_label,
         r"$(D^{(2)})^2 / D^{(4)}$",
+        alpha=0.4,
     )
 
     scatter_3d(
@@ -54,6 +55,7 @@ def plot_km_coeffs_estimation(
         x_label,
         y_label,
         r"$D^{(4)} / (D^{(2)})^2$",
+        alpha=0.4,
     )
 
     plt.show()
@@ -99,9 +101,21 @@ def plot_km_coeffs_estimation_opti(
     ax1 = fig.add_subplot(gs[0, 0], projection="3d")
     ax2 = fig.add_subplot(gs[0, 1], projection="3d")
     ax3 = fig.add_subplot(gs[1, :])
+    ax1.invert_yaxis()
+    ax2.invert_yaxis()
     ax3.set_aspect(1)
 
-    scatter_3d(ax1, u_incs, scales, D1, x_label, y_label, r"$D^{(1)}$", legend="No opt")
+    scatter_3d(
+        ax1,
+        u_incs,
+        scales,
+        D1,
+        x_label,
+        y_label,
+        r"$D^{(1)}$",
+        legend="No opt",
+        alpha=0.4,
+    )
     scatter_3d(
         ax1,
         u_incs_opti,
@@ -112,9 +126,20 @@ def plot_km_coeffs_estimation_opti(
         r"$D^{(1)}$",
         legend="Opt",
         color="C0",
+        alpha=0.4,
     )
 
-    scatter_3d(ax2, u_incs, scales, D2, x_label, y_label, r"$D^{(2)}$", legend="No opt")
+    scatter_3d(
+        ax2,
+        u_incs,
+        scales,
+        D2,
+        x_label,
+        y_label,
+        r"$D^{(2)}$",
+        legend="No opt",
+        alpha=0.4,
+    )
     scatter_3d(
         ax2,
         u_incs_opti,
@@ -125,6 +150,7 @@ def plot_km_coeffs_estimation_opti(
         r"$D^{(2)}$",
         legend="Opt",
         color="C0",
+        alpha=0.4,
     )
 
     _plot_pdf_estimation_opti(
@@ -249,6 +275,49 @@ def _plot_pdf_estimation_opti(
     ax.legend(handles=legend_elements, loc="lower right")
 
 
+def plot_km_coeffs_fit(
+    km_coeffs,
+    density_funcs_group,
+    km_coeffs_est_group,
+    nbins,
+    taylor_scale,
+    use_Di_opti=True,
+):
+    # Rebuild the data
+    u_incs, scales, D1, _, D2, _ = get_Di_for_all_incs_and_scales(
+        density_funcs_group,
+        km_coeffs_est_group,
+        nbins,
+        taylor_scale,
+        use_Di_opti=use_Di_opti,
+    )
+
+    fig, (ax1, ax2) = plt.subplots(
+        1, 2, subplot_kw={"projection": "3d"}, figsize=(14, 6)
+    )
+    ax1.invert_yaxis()
+    ax2.invert_yaxis()
+
+    x_label = r"$u_s / \sigma_\infty$"
+    y_label = r"$s / \lambda$"
+
+    scatter_3d(ax1, u_incs, scales, D1, x_label, y_label, r"$D^{(1)}$")
+
+    x_lin = np.linspace(np.nanmin(u_incs), np.nanmax(u_incs), 60)
+    y_lin = np.logspace(np.log10(np.nanmin(scales)), np.log10(np.nanmax(scales)), 60)
+    X, Y = np.meshgrid(x_lin, y_lin)
+
+    D1_fit = km_coeffs.eval_D1(X, Y)
+    ax1.plot_surface(X, Y, D1_fit, alpha=0.5, cmap="GnBu_r")
+
+    scatter_3d(ax2, u_incs, scales, D2, x_label, y_label, r"$D^{(2)}$")
+
+    D2_fit = km_coeffs.eval_D2(X, Y)
+    ax2.plot_surface(X, Y, D2_fit, alpha=0.5, cmap="GnBu_r")
+
+    plt.show()
+
+
 def scatter_3d(ax, x, y, z, x_label, y_label, z_label, legend=None, **kwargs):
     if "color" not in kwargs.keys():
         kwargs["color"] = "k"
@@ -265,12 +334,10 @@ def scatter_3d(ax, x, y, z, x_label, y_label, z_label, legend=None, **kwargs):
         y_flat[mask],
         z_flat[mask],
         ec="white",
-        s=30,
-        lw=0.5,
-        alpha=0.5,
+        s=40,
+        lw=1,
         **kwargs,
     )
-    ax.invert_yaxis()
     ax.set_xlabel(x_label)
     ax.set_ylabel(y_label)
     ax.set_zlabel(z_label)

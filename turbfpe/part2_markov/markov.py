@@ -5,16 +5,20 @@ from ..utils.parameters_utils import Params
 from ..utils.storing_clases import (
     ConditionalMomentsGroup,
     DensityFunctionsGroup,
+    KMCoeffs,
     KMCoeffsEstimationGroup,
 )
 from .conditional_moments_estimation import compute_conditional_moments_estimation
 from .km_coeffs_estimation import (
     compute_km_coeffs_estimation,
 )
-from .km_coeffs_estimation_stp_opti import (
-    compute_km_estimation_stp_opti,
+from .km_coeffs_estimation_stp_opti import compute_km_estimation_stp_opti
+from .km_coeffs_fit import compute_km_coeffs_fit
+from .plot_km_coeffs import (
+    plot_km_coeffs_estimation,
+    plot_km_coeffs_estimation_opti,
+    plot_km_coeffs_fit,
 )
-from .plot_km_coeffs import plot_km_coeffs_estimation, plot_km_coeffs_estimation_opti
 from .wilcoxon_test import compute_wilcoxon_test, plot_wilcoxon_test
 
 
@@ -146,19 +150,18 @@ def compute_km_coeffs_estimation_params(_, params):
 
 
 def plot_km_coeffs_estimation_params(_, params):
-    km_coeffs_est_group = KMCoeffsEstimationGroup.load_npz(
-        params.format_output_filename("km_coeffs_estimation.npz")
-    )
-
     density_funcs_group = DensityFunctionsGroup.load_npz(
         params.format_output_filename("density_functions.npz")
     )
 
-    nbins = params.read("p2.general.nbins")
+    km_coeffs_est_group = KMCoeffsEstimationGroup.load_npz(
+        params.format_output_filename("km_coeffs_estimation.npz")
+    )
+
     taylor_scale = params.read("general.taylor_scale")
 
     plot_km_coeffs_estimation(
-        km_coeffs_est_group, density_funcs_group, nbins, taylor_scale
+        km_coeffs_est_group, density_funcs_group, taylor_scale
     )
 
 
@@ -206,5 +209,54 @@ def plot_km_coeffs_estimation_opti_params(_, params):
     taylor_hyp_vel = params.read("general.taylor_hyp_vel")
 
     plot_km_coeffs_estimation_opti(
-        km_coeffs_est_group, density_funcs_group, fs, markov_scale_us, nbins, taylor_scale, taylor_hyp_vel
+        km_coeffs_est_group,
+        density_funcs_group,
+        fs,
+        markov_scale_us,
+        nbins,
+        taylor_scale,
+        taylor_hyp_vel,
+    )
+
+
+def compute_km_coeffs_fit_params(_, params):
+    density_funcs_group = DensityFunctionsGroup.load_npz(
+        params.format_output_filename("density_functions.npz")
+    )
+
+    km_coeffs_est_group = KMCoeffsEstimationGroup.load_npz(
+        params.format_output_filename("km_coeffs_estimation.npz")
+    )
+
+    nbins = params.read("p2.general.nbins")
+    taylor_scale = params.read("general.taylor_scale")
+
+    km_coeffs, km_coeffs_noopt = compute_km_coeffs_fit(
+        density_funcs_group, km_coeffs_est_group, nbins, taylor_scale
+    )
+
+    km_coeffs.write_npz(params.format_output_filename("km_coeffs.npz"))
+    km_coeffs_noopt.write_npz(params.format_output_filename("km_coeffs_noopt.npz"))
+
+
+def plot_km_coeffs_fit_params(_, params):
+    density_funcs_group = DensityFunctionsGroup.load_npz(
+        params.format_output_filename("density_functions.npz")
+    )
+
+    km_coeffs_est_group = KMCoeffsEstimationGroup.load_npz(
+        params.format_output_filename("km_coeffs_estimation.npz")
+    )
+
+    km_coeffs = KMCoeffs.load_npz(params.format_output_filename("km_coeffs.npz"))
+
+    nbins = params.read("p2.general.nbins")
+    taylor_scale = params.read("general.taylor_scale")
+
+    plot_km_coeffs_fit(
+        km_coeffs,
+        density_funcs_group,
+        km_coeffs_est_group,
+        nbins,
+        taylor_scale,
     )
