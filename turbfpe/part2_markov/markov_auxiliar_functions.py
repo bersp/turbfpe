@@ -133,11 +133,11 @@ def distribution(x_data, y_data, bins):
 
 
 def compute_mean_values_per_bin(data, counts, bin_edges):
-    bins = bin_edges.size - 1
+    nbins = bin_edges.size - 1
 
     indices = np.digitize(data, bin_edges) - 1  # Convert to 0-based index
-    indices = np.clip(indices, 0, bins - 1)
-    sums = np.bincount(indices, weights=data, minlength=bins)
+    indices = np.clip(indices, 0, nbins - 1)
+    sums = np.bincount(indices, weights=data, minlength=nbins)
 
     mean_per_bin = np.full(sums.shape, np.nan)
     idx = counts != 0
@@ -149,7 +149,7 @@ def compute_mean_values_per_bin(data, counts, bin_edges):
 def get_Di_for_all_incs_and_scales(
     density_funcs_group,
     km_coeffs_group,
-    bins: int,
+    nbins: int,
     taylor_scale: float,
     use_Di_opti=True,
 ):
@@ -160,12 +160,12 @@ def get_Di_for_all_incs_and_scales(
     n_scales = len(km_coeffs_group)
 
     # Preallocate
-    u_matrix = np.full((n_scales, bins), np.nan)
-    scale_matrix = np.full((n_scales, bins), np.nan)
-    D1_mat = np.full((n_scales, bins), np.nan)
-    D1_err_mat = np.full((n_scales, bins), np.nan)
-    D2_mat = np.full((n_scales, bins), np.nan)
-    D2_err_mat = np.full((n_scales, bins), np.nan)
+    u_matrix = np.full((n_scales, nbins), np.nan)
+    scale_matrix = np.full((n_scales, nbins), np.nan)
+    D1_mat = np.full((n_scales, nbins), np.nan)
+    D1_err_mat = np.full((n_scales, nbins), np.nan)
+    D2_mat = np.full((n_scales, nbins), np.nan)
+    D2_err_mat = np.full((n_scales, nbins), np.nan)
 
     for i, (dens_funcs, km_est) in enumerate(zip(density_funcs_group, km_coeffs_group)):
         # valid_idxs = km_est.valid_idxs

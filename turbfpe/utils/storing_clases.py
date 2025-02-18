@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import asdict, dataclass, field
 from typing import Any, Callable, Dict, Generic, List, TypeVar
 
@@ -65,9 +66,18 @@ class KMCoeffsEstimation:
     D2_err: npt.NDArray[np.float64]
     D3: npt.NDArray[np.float64]
     D4: npt.NDArray[np.float64]
-    D1_opti: npt.NDArray[np.float64]
-    D2_opti: npt.NDArray[np.float64]
+    D1_opti: npt.NDArray[np.float64] = field(default_factory=lambda: np.array([]))
+    D2_opti: npt.NDArray[np.float64] = field(default_factory=lambda: np.array([]))
     valid_idxs: npt.NDArray[np.float64] = field(default_factory=lambda: np.array([]))
+
+    def set_D1_opti(self, value: npt.NDArray[np.float64]) -> None:
+        self.D1_opti = value
+
+    def set_D2_opti(self, value: npt.NDArray[np.float64]) -> None:
+        self.D2_opti = value
+
+    def set_valid_idxs(self, value: npt.NDArray[np.float64]) -> None:
+        self.valid_idxs = value
 
 
 @dataclass
@@ -158,16 +168,40 @@ class DataClassGroup(Generic[T]):
 
     def unpack(self, attr_name: str) -> np.ndarray:
         """
-        Extracts and returns a NumPy array containing the values of the specified attribute
-        from all dataclass instances in the group.
+        Extracts and returns a NumPy array containing the values of the
+        specified attribute from all dataclass instances in the group,
+        padding arrays with different sizes on the right.
 
         Args:
             attr_name (str): The name of the attribute to extract (e.g. "D1").
 
         Returns:
-            np.ndarray: A NumPy array composed of the values of the specified attribute.
+            np.ndarray: A NumPy array composed of the values of the specified attribute,
+            where shorter arrays are padded with np.nan on the right.
         """
-        return np.array([getattr(item, attr_name) for item in self._items])
+
+
+        is_scalar = np.asarray(getattr(self._items[0], attr_name)).ndim == 0
+        if is_scalar:
+            return np.array([getattr(item, attr_name) for item in self._items])
+
+        arrays = []
+        for item in self._items:
+            arr = np.asarray(getattr(item, attr_name))
+            if arr.ndim == 0:
+                arr = np.array([arr])
+            arrays.append(arr)
+
+        # Determine the maximum size along the first dimension.
+        max_len = max(arr.shape[0] for arr in arrays)
+        # Get the remaining dimensions, if any.
+        result = np.full(
+            (len(arrays), max_len), np.nan, dtype=arrays[0].dtype
+        )
+        for i, arr in enumerate(arrays):
+            length = arr.shape[0]
+            result[i, :length, ...] = arr
+        return result
 
     def write_npz(self, filename: str) -> None:
         """
@@ -181,20 +215,8 @@ class DataClassGroup(Generic[T]):
                 data_to_save[f"{idx}_{field_name}"] = value
         np.savez(filename, **data_to_save)
 
-    @classmethod
-    def _load_raw_data(cls, filename: str) -> Dict[int, Dict[str, Any]]:
-        """
-        Reads an .npz file and groups data by item index.
-        Returns:
-            A dict mapping each item index to its field dictionary.
-        """
-        raw_groups: Dict[int, Dict[str, Any]] = {}
-        with np.load(filename, allow_pickle=False) as data:
-            for key in data.keys():
-                idx_str, field_name = key.split("_", 1)
-                idx = int(idx_str)
-                raw_groups.setdefault(idx, {})[field_name] = data[key]
-        return raw_groups
+    def copy(self) -> "DataClassGroup[T]":
+        return deepcopy(self)
 
     @classmethod
     def load_npz(
@@ -212,8 +234,26 @@ class DataClassGroup(Generic[T]):
             group.add(instance)
         return group
 
+    @classmethod
+    def _load_raw_data(cls, filename: str) -> Dict[int, Dict[str, Any]]:
+        """
+        Reads an .npz file and groups data by item index.
+        Returns:
+            A dict mapping each item index to its field dictionary.
+        """
+        raw_groups: Dict[int, Dict[str, Any]] = {}
+        with np.load(filename, allow_pickle=False) as data:
+            for key in data.keys():
+                idx_str, field_name = key.split("_", 1)
+                idx = int(idx_str)
+                raw_groups.setdefault(idx, {})[field_name] = data[key]
+        return raw_groups
+
     def __getitem__(self, index: int) -> T:
         return self._items[index]
+
+    def __setitem__(self, index: int, value: T) -> None:
+        self._items[index] = value
 
     def __iter__(self):
         return iter(self._items)
