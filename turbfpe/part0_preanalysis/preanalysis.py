@@ -7,8 +7,9 @@ from .preanalysis_functions import compute_int_scale
 
 def exec_rutine(params_file):
     params = Params(params_file)
-    data = params.load_data(flat=True, ignore_opts=True)
+    data = params.load_data(flat=False, ignore_opts=True)
     params.write("data.shape", data.shape)
+    data = data.flatten()
 
     for func in params.read("rutine.part0_preanalysis"):
         func = globals()[f"{func}_params"]
