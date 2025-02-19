@@ -48,7 +48,7 @@ def compute_markov_autovalues_params(data, params):
         params.write("p2.general.nbins", tmp)
 
     if params.is_auto("p2.compute_wilcoxon_test.nbins"):
-        tmp = params.read("general.nbins")
+        tmp = params.read("p2.general.nbins")
         params.write("p2.compute_wilcoxon_test.nbins", tmp)
 
     if params.is_auto("p2.compute_wilcoxon_test.indep_scale"):

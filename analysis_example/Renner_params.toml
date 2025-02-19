@@ -87,7 +87,7 @@ range = "!auto"
 
 [p2.compute_wilcoxon_test]
 	# need => data, general.fs, general.taylor_hyp_vel and
-	nbins = "!auto"  # int or auto (same as general.nbins).
+	nbins = "!auto"  # int or auto (same as p2.general.nbins).
 	indep_scale = "!auto"  # float or auto.
 	n_interv_sec = 5  # int. Larger is slower but reduces result noise.
 
