@@ -147,8 +147,29 @@ class KMCoeffs:
         data.close()
         return cls(**data_dict)
 
+@dataclass
+class Entropies:
+    medium_entropy: npt.NDArray[np.float64]
+    system_entropy: npt.NDArray[np.float64]
+    total_entropy: npt.NDArray[np.float64]
 
-# --- Generic Group Container ---
+    def write_npz(self, filename: str) -> None:
+        """
+        Writes all dataclass items to a .npz file.
+        """
+        data_to_save: Dict[str, Any] = asdict(self)
+        np.savez(filename, **data_to_save)
+
+    @classmethod
+    def load_npz(cls, filename: str) -> "Entropies":
+        """
+        Loads a Entropies instance from a .npz file.
+        """
+        data_dict = dict(np.load(filename))
+        return cls(**data_dict)
+
+
+# --- Group Containers ---
 
 T = TypeVar("T")
 
