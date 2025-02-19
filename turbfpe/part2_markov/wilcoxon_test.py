@@ -129,11 +129,8 @@ def wilcoxon_test_multiple_bins(inc1, inc2, bins1, idx_c0):
     return np.mean(T_list)
 
 
-def plot_wilcoxon_test(data, filename, markov_scale_us):
+def plot_wilcoxon_test(data, delta_arr, wt_arr, markov_scale_us):
     # TODO: Improve plot and add options to see this in different units
-    delta_arr, *wt_arr = np.load(filename)
-    wt_arr = np.mean(wt_arr, axis=0)
-
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
 
     ax1.axhline(1, c="k")

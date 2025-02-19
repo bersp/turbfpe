@@ -76,14 +76,19 @@ def compute_wilcoxon_test_params(data, params):
         data, fs, nbins, taylor_hyp_vel, indep_scale, n_interv_sec
     )
 
-    output_filename = params.format_output_filename("wilcoxon_test.npy")
-    np.save(output_filename, np.vstack([delta_arr, wt_arr]))
+    np.save(
+        params.format_output_filename("wilcoxon_test.npy"),
+        np.vstack([delta_arr, wt_arr]),
+    )
 
 
 def plot_wilcoxon_test_params(data, params):
     markov_scale_us = params.read("p2.general.markov_scale_us")
-    filename = params.format_output_filename("wilcoxon_test.npy")
-    plot_wilcoxon_test(data, filename, markov_scale_us)
+
+    delta_arr, *wt_arr = np.load(params.format_output_filename("wilcoxon_test.npy"))
+    wt_arr = np.mean(wt_arr, axis=0)
+
+    plot_wilcoxon_test(data, delta_arr, wt_arr, markov_scale_us)
 
 
 def compute_conditional_moments_estimation_params(data, params):
@@ -160,9 +165,7 @@ def plot_km_coeffs_estimation_params(_, params):
 
     taylor_scale = params.read("general.taylor_scale")
 
-    plot_km_coeffs_estimation(
-        km_coeffs_est_group, density_funcs_group, taylor_scale
-    )
+    plot_km_coeffs_estimation(km_coeffs_est_group, density_funcs_group, taylor_scale)
 
 
 def compute_km_coeffs_estimation_stp_opti_params(data, params):
