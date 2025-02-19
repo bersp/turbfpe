@@ -40,6 +40,7 @@ mpl.constrained_layout = true
 
 [data]
 io.path = "./Renner_8000Hz_filter.npy"  # str.
+prop_to_use = 1.0  # float (from 0.0 to 1.0) or [float, float] ndim=2
 opts.norm_data = true  # bool. Normalice data with sigma_inf.
 opts.flip_data = true  # bool or auto (not implemented yet).
 shape = "!auto"

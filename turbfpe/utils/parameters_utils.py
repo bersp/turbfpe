@@ -78,14 +78,29 @@ class Params:
     def load_data(self, *, flat=False, ignore_opts=False):
         data_path = self.read("data.io.path")
         data = np.load(data_path)
+
+        prop = np.array(self.read("data.prop_to_use"))
+        if data.ndim != prop.size:
+            raise ValueError(
+                    f"data.prop_to_use {repr(prop)} is not compatible with data.shape={repr(data.shape)}"
+            )
+
+        if data.ndim == 1:
+            tot_size = data.size
+            data = data[: int(tot_size * prop)]
+        elif data.ndim == 2:
+            tot_size_1, tot_size_2 = data.shape
+            prop_1, prop_2 = prop
+            data = data[: int(tot_size_1 * prop_1), : int(tot_size_2 * prop_2)]
+        else:
+            raise ValueError(f"Data can't have more than two dimensions.")
+
         if flat:
             data = data.flatten()
-        elif len(data.shape) == 1:
+        elif data.ndim == 1:
             data = data[np.newaxis, :]
-        elif len(data.shape) == 2:
-            pass
         else:
-            raise ValueError(f"Data with shape {repr(data.shape)} is not compatible.")
+            pass
 
         if ignore_opts:
             return data
