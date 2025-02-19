@@ -41,7 +41,7 @@ class Params:
             prop_is_auto = bool(nsubs)
 
         if data == "":
-            raise ValueError(f"'{prop}' is empty'")
+            raise ValueError(f"'{prop}' is empty")
         if data == "none":
             return None
 
