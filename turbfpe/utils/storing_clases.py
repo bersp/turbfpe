@@ -68,7 +68,7 @@ class KMCoeffsEstimation:
     D4: npt.NDArray[np.float64]
     D1_opti: npt.NDArray[np.float64] = field(default_factory=lambda: np.array([]))
     D2_opti: npt.NDArray[np.float64] = field(default_factory=lambda: np.array([]))
-    valid_idxs: npt.NDArray[np.float64] = field(default_factory=lambda: np.array([]))
+    valid_idxs: npt.NDArray[np.bool_] = field(default_factory=lambda: np.array([], dtype=np.bool_))
 
     def set_D1_opti(self, value: npt.NDArray[np.float64]) -> None:
         self.D1_opti = value

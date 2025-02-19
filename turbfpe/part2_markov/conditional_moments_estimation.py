@@ -79,7 +79,7 @@ def compute_conditional_moments_estimation(
             ) = distribution(
                 x_data=inc1,
                 y_data=inc0,
-                num_bin=nbins,
+                bins=nbins,
             )
 
             mp_bin0 = compute_mean_values_per_bin(inc0, counts0, bin0_edges)

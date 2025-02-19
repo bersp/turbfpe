@@ -136,6 +136,7 @@ def compute_km_coeffs_estimation_params(_, params):
     fs = params.read("general.fs")
     markov_scale_us = params.read("p2.general.markov_scale_us")
     nbins = params.read("p2.general.nbins")
+    min_events = params.read("p2.general.min_events")
     taylor_scale = params.read("general.taylor_scale")
     taylor_hyp_vel = params.read("general.taylor_hyp_vel")
 
@@ -145,6 +146,7 @@ def compute_km_coeffs_estimation_params(_, params):
         fs,
         markov_scale_us,
         nbins,
+        min_events,
         taylor_scale,
         taylor_hyp_vel,
     )
@@ -175,7 +177,6 @@ def compute_km_coeffs_estimation_stp_opti_params(data, params):
 
     fs = params.read("general.fs")
     nbins = params.read("p2.general.nbins")
-    min_events = params.read("p2.general.min_events")
     tol = params.read("p2.compute_km_coeffs_estimation_stp_opti.tol")
     taylor_scale = params.read("general.taylor_scale")
     taylor_hyp_vel = params.read("general.taylor_hyp_vel")
@@ -185,7 +186,6 @@ def compute_km_coeffs_estimation_stp_opti_params(data, params):
         km_coeffs_est_group,
         fs,
         nbins,
-        min_events,
         tol,
         taylor_scale,
         taylor_hyp_vel,

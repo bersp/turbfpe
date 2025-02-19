@@ -96,8 +96,8 @@ def plot_km_coeffs_estimation_opti(
         use_Di_opti=True,
     )
 
-    fig = plt.figure(figsize=(9, 9))
-    gs = gridspec.GridSpec(2, 2)
+    fig = plt.figure(figsize=(10, 9))
+    gs = gridspec.GridSpec(2, 2, figure=fig)
     ax1 = fig.add_subplot(gs[0, 0], projection="3d")
     ax2 = fig.add_subplot(gs[0, 1], projection="3d")
     ax3 = fig.add_subplot(gs[1, :])

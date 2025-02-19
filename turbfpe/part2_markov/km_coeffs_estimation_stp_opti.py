@@ -30,7 +30,7 @@ def compute_km_coeffs_estimation_stp_opti_one_scale(
     P_1I0, *_, bin1_edges, bin0_edges, _, _, counts1, counts0 = distribution(
         x_data=inc1,
         y_data=inc0,
-        num_bin=nbins,
+        bins=nbins,
     )
     mean_per_bin0 = compute_mean_values_per_bin(inc0, counts0, bin0_edges)
     mean_per_bin1 = compute_mean_values_per_bin(inc1, counts1, bin1_edges)
@@ -91,7 +91,6 @@ def compute_km_estimation_stp_opti(
     km_coeffs_est_group,
     fs,
     nbins,
-    min_events,
     tol,
     taylor_scale,
     taylor_hyp_vel,
@@ -111,7 +110,6 @@ def compute_km_estimation_stp_opti(
             km_coeffs_est,
             fs,
             nbins,
-            min_events,
             tol,
             taylor_scale,
             taylor_hyp_vel,
