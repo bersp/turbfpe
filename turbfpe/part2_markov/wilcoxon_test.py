@@ -14,25 +14,25 @@ SQRT_2_DIV_PI = np.sqrt(2 / np.pi)
 
 
 def compute_wilcoxon_test(data, fs, nbins, taylor_hyp_vel, indep_scale, n_interv_sec=1):
+
+    to_us = fs / taylor_hyp_vel # convert to unit of samples
+
     # number of statistically independent intervals
-    indep_scale_us = round(fs * indep_scale / taylor_hyp_vel)
+    indep_scale_us = round(indep_scale*to_us)
     n_interv = data.shape[1] // indep_scale_us - 1
 
-    # calculate delta_arr
+    # calculate delta_arr (in unit of samples)
     n_increments = 10 * nbins
-    taylor_scale = 1 / fs
+    start_scale = taylor_hyp_vel / fs  # this is 1 in unit of samples
+    end_scale = indep_scale
     delta_arr = (
         np.logspace(
-            np.log10(taylor_scale * 1e6),
-            np.log10((indep_scale - taylor_scale / 2.5) * 1e6),
-            # If there is some problem with this, you can try with
-            # replacing the second value of the logspace with
-            # np.log10((indep_scale-taylor_scale/2.5)*1e6)
+            np.log10(start_scale),
+            np.log10(end_scale),
             n_increments,
         )
-        * 1e-6
-    )
-    delta_arr = np.unique(np.floor(delta_arr * fs / taylor_hyp_vel).astype(int))
+    ) * to_us
+    delta_arr = np.unique(np.floor(delta_arr).astype(int))
     delta_arr = delta_arr[delta_arr != 0]
 
     # calculate where starts the independent intervals
@@ -140,7 +140,7 @@ def plot_wilcoxon_test(data, delta_arr, wt_arr, markov_scale_us):
     ax1.loglog(delta_arr, wt_arr, "ok")
     ax1.legend()
 
-    _plot_pdf_on_markov_scale(ax2, data, markov_scale_us, u0=-1)
+    # _plot_pdf_on_markov_scale(ax2, data, markov_scale_us, u0=-1)
 
     plt.show()
 
