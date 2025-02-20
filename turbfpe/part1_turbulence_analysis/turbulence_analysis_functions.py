@@ -76,7 +76,7 @@ def plot_spectrum(data, fs, ma_nbins):
     ene = 2 * esd[1:]
 
     fig, ax = plt.subplots(figsize=(6, 6))
-    ax.set_xlabel(r"$f$")
+    ax.set_xlabel(r"$f~[1/T]$")
     ax.set_ylabel("$E(f)$")
 
     # plot raw data
