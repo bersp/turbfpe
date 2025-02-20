@@ -49,11 +49,11 @@ def compute_and_write_general_autovalues_params(data, params: Params):
         )
         params.write("general.epsilon", tmp)
 
-    if params.is_auto("general.kolmogorov_scale"):
+    if params.is_auto("general.kolmogorov_length"):
         tmp = (params.read("general.nu") ** 3 / params.read("general.epsilon")) ** (
             1 / 4
         )
-        params.write("general.kolmogorov_scale", tmp)
+        params.write("general.kolmogorov_length", tmp)
 
     if params.is_auto("general.kolmogorov_time"):
         tmp = (params.read("general.nu") / params.read("general.epsilon")) ** (1 / 2)

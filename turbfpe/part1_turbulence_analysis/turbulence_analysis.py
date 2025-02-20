@@ -30,7 +30,8 @@ def compute_turbulence_analysis_autovalues_params(data, params):
         params.write("general.nbins", tmp)
 
     if params.is_auto("p1.plot_pdf.nbins"):
-        params.write("p1.plot_pdf.nbins", params.read("general.nbins"))
+        tmp = params.read("general.nbins")
+        params.write("p1.plot_pdf.nbins", tmp)
 
     if params.is_auto("p1.plot_spectrum.moving_average_nbins"):
         tmp = 10 * params.read("general.nbins")

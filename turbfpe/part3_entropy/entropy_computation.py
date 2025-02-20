@@ -32,7 +32,7 @@ def compute_entropy(
         The dimensionless smallest scale to be used.
     largest_scale : float
         The dimensionless largest scale to be used.
-    scale_subsample_step : int
+    scale_subsample_step_us : int
         Step size for subsampling scales.
     taylor_scale : float
         Taylor length scale (used to normalice other scales).
@@ -53,7 +53,7 @@ def compute_entropy(
         Indices in data corresponding to the start of each trajectory.
     indep_scales_idxs : ndarray
         Indices for the scales used.
-    scale_subsample_step : int
+    scale_subsample_step_us : int
         Step size used for subsampling scales.
     indep_incs_for_all_scales : ndarray or None
         Matrix of increments for each trajectory.
@@ -71,26 +71,28 @@ def compute_entropy(
         Auxiliary Hamiltonian derivative.
     """
 
-    # Use dimensionless scales.
+    to_us = fs / taylor_hyp_vel
+
+    # Uso dimensionless scales.
     largest_scale_dimless = largest_scale / taylor_scale
     smallest_scale_dimless = smallest_scale / taylor_scale
 
-    num_points = int(np.ceil(1.1 * largest_scale * fs / taylor_hyp_vel))
-    all_indep_scales = (np.arange(num_points) * taylor_hyp_vel) / (fs * taylor_scale)
+    num_points = int(np.ceil(1.1 * largest_scale * to_us))
+    all_indep_scales_dimless = np.arange(num_points) / to_us / taylor_scale
 
     # Find indices closest to the target scales.
     # For largest_scale, we want the last occurrence of the minimum difference.
-    largest_index = all_indep_scales.size - np.argmin(
-        np.abs(all_indep_scales[::-1] - largest_scale_dimless)
+    largest_index = all_indep_scales_dimless.size - np.argmin(
+        np.abs(all_indep_scales_dimless[::-1] - largest_scale_dimless)
     )
     # For smallest_scale, we take the first occurrence.
-    smallest_index = np.argmin(np.abs(all_indep_scales - smallest_scale_dimless))
+    smallest_index = np.argmin(np.abs(all_indep_scales_dimless - smallest_scale_dimless))
 
     trajectory_chunk_length = largest_index
 
     # Take only the independen scales between the smallest and the largest scale.
     indep_scales_idxs = np.arange(smallest_index, largest_index + 1)[::-1]
-    indep_scales = all_indep_scales[indep_scales_idxs]
+    indep_scales = all_indep_scales_dimless[indep_scales_idxs]
 
     # Independent (non-overlapping) increments
     indep_incs_for_all_scales, incs_start_idxs = get_non_overlap_idep_incs(
@@ -98,8 +100,9 @@ def compute_entropy(
     )
 
     # Indepentent increments for scales separated by (problably) one markovian step
-    sampled_scales = indep_scales[::scale_subsample_step]
-    sampled_incs = indep_incs_for_all_scales[:, ::scale_subsample_step]
+    scale_subsample_step_us = int(scale_subsample_step * fs / taylor_hyp_vel)
+    sampled_scales = indep_scales[::scale_subsample_step_us]
+    sampled_incs = indep_incs_for_all_scales[:, ::scale_subsample_step_us]
 
     # Midpoint derivative (and properly evaluated incs and scales in those points)
     scales_central, scale_spacing_central, incs_central, incs_deriv_central = (
@@ -147,7 +150,7 @@ def compute_entropy(
         indep_scales,
         incs_start_idxs,
         indep_scales_idxs,
-        scale_subsample_step,
+        scale_subsample_step_us,
         indep_incs_for_all_scales,
         lagrangian,
         action,

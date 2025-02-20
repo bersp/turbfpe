@@ -26,7 +26,8 @@ def compute_entropy_autovalues_params(_, params):
         params.write("p3.compute_entropy.largest_scale", tmp)
 
     if params.is_auto("p3.compute_entropy.scale_subsample_step"):
-        tmp = params.read("p2.general.markov_scale_us")
+        to_us = params.read("general.fs") / params.read("general.taylor_hyp_vel")
+        tmp = params.read("p2.general.markov_scale_us") / to_us
         params.write("p3.compute_entropy.scale_subsample_step", tmp)
 
 

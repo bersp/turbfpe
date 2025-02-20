@@ -51,7 +51,7 @@ highest_freq = 1800.0 # float or auto (not implemented yet)
 nu = 15.32e-6  # float. def: kinematic vistosity.
 int_scale = 0.0672 # 0.035482826276860564  # float or auto (from preanalysis).
 taylor_scale = 0.0066  # float or auto (not implemented yet).
-kolmogorov_scale = "!auto"  # float or auto (from preanalysis).
+kolmogorov_length = "!auto"  # float or auto (from preanalysis).
 kolmogorov_time = "!auto"  # float or auto (from preanalysis).
 epsilon = "!auto"  # float or auto (from preanalysis). def: mean disipation rate..
 taylor_hyp_vel = 2.25  # float or auto (not implemented yet). def: velocity to transform space to time.
@@ -89,7 +89,7 @@ range = "!auto"
 [p2.compute_wilcoxon_test]
 	# need => data, general.fs, general.taylor_hyp_vel and
 	nbins = "!auto"  # int or auto (same as p2.general.nbins).
-	indep_scale = "!auto"  # float or auto.
+	indep_scale = "!auto"  # float or auto (need general.int_scale).
 	n_interv_sec = 5  # int. Larger is slower but reduces result noise.
 
 	# writes wilcoxon_test.npy
@@ -129,13 +129,13 @@ range = "!auto"
 	#         p2.markov_scale_us and p2.general.nbins,
 	# 		  general.taylor_scale, general.taylor_hyp_vel
 
-[p2.compute_km_coeffs_fit_params]
+[p2.compute_km_coeffs_fit]
 	# need => km_coeffs_estimation.npz, density_functions.npz and
 	#         p2.general.nbins and general.taylor_scale
 	
 	# writes => km_coeffs.npz and km_coeffs_noopt.npz
 
-[p2.plot_km_coeffs_fit_params]
+[p2.plot_km_coeffs_fit]
 	# need => km_coeffs_estimation.npz, density_functions.npz, km_coeffs.npz and
 	#		  p2.general.nbins, general.taylor_scale
 

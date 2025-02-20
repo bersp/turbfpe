@@ -52,15 +52,14 @@ def compute_markov_autovalues_params(data, params):
         params.write("p2.compute_wilcoxon_test.nbins", tmp)
 
     if params.is_auto("p2.compute_wilcoxon_test.indep_scale"):
+        to_us = params.read("general.fs") / params.read("general.taylor_hyp_vel")
         indep_scale = params.read("general.int_scale")
-        fs = params.read("general.fs")
-        taylor_hyp_vel = params.read("general.taylor_hyp_vel")
-        indep_scale_in_samples = round(fs * indep_scale / taylor_hyp_vel)
-        n_interv = data.shape[1] // indep_scale_in_samples - 1
+        indep_scale_us = round(indep_scale * to_us)
+        n_interv = data.shape[1] // indep_scale_us - 1
         while n_interv < 5:
-            indep_scale = 0.9 * indep_scale
-            indep_scale_in_samples = round(fs * indep_scale / taylor_hyp_vel)
-            n_interv = data.shape[1] // indep_scale_in_samples - 1
+            indep_scale = 0.95 * indep_scale
+            indep_scale_us = round(indep_scale * to_us)
+            n_interv = data.shape[1] // indep_scale_us - 1
         tmp = indep_scale
         params.write("p2.compute_wilcoxon_test.indep_scale", tmp)
 
