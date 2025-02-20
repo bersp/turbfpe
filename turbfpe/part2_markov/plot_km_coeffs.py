@@ -15,7 +15,7 @@ def plot_km_coeffs_estimation(km_coeffs_est_group, density_funcs_group, taylor_s
     D4 = km_coeffs_est_group.unpack("D4")
 
     scales_1d = km_coeffs_est_group.unpack("scale") / taylor_scale
-    scales = np.tile(scales_1d, (91, 1)).T
+    scales = np.tile(scales_1d, (u_incs.shape[1], 1)).T
 
     valid_idxs = km_coeffs_est_group.unpack("valid_idxs")
     u_incs[~valid_idxs] = np.nan
@@ -76,7 +76,7 @@ def plot_km_coeffs_estimation_opti(
     D2 = km_coeffs_est_group.unpack("D2")
 
     scales_1d = km_coeffs_est_group.unpack("scale") / taylor_scale
-    scales = np.tile(scales_1d, (91, 1)).T
+    scales = np.tile(scales_1d, (u_incs.shape[1], 1)).T
 
     valid_idxs = km_coeffs_est_group.unpack("valid_idxs")
     u_incs[~valid_idxs] = np.nan
@@ -293,7 +293,7 @@ def plot_km_coeffs_fit(
     )
 
     fig, (ax1, ax2) = plt.subplots(
-        1, 2, subplot_kw={"projection": "3d"}, figsize=(14, 6)
+            1, 2, subplot_kw={"projection": "3d",  "computed_zorder": False}, figsize=(14, 6)
     )
     ax1.invert_yaxis()
     ax2.invert_yaxis()
@@ -301,19 +301,19 @@ def plot_km_coeffs_fit(
     x_label = r"$u_s / \sigma_\infty$"
     y_label = r"$s / \lambda$"
 
-    scatter_3d(ax1, u_incs, scales, D1, x_label, y_label, r"$D^{(1)}$")
 
     x_lin = np.linspace(np.nanmin(u_incs), np.nanmax(u_incs), 60)
     y_lin = np.logspace(np.log10(np.nanmin(scales)), np.log10(np.nanmax(scales)), 60)
     X, Y = np.meshgrid(x_lin, y_lin)
 
     D1_fit = km_coeffs.eval_D1(X, Y)
-    ax1.plot_surface(X, Y, D1_fit, alpha=0.5, cmap="GnBu_r")
+    ax1.plot_surface(X, Y, D1_fit, alpha=.8, cmap="GnBu_r")
+    scatter_3d(ax1, u_incs, scales, D1, x_label, y_label, r"$D^{(1)}$")
 
-    scatter_3d(ax2, u_incs, scales, D2, x_label, y_label, r"$D^{(2)}$")
 
     D2_fit = km_coeffs.eval_D2(X, Y)
-    ax2.plot_surface(X, Y, D2_fit, alpha=0.5, cmap="GnBu_r")
+    ax2.plot_surface(X, Y, D2_fit, alpha=.8, cmap="GnBu_r")
+    scatter_3d(ax2, u_incs, scales, D2, x_label, y_label, r"$D^{(2)}$")
 
     plt.show()
 
