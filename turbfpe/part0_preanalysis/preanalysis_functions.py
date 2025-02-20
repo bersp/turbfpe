@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from ..utils.general import logspace_moving_average
+from ..utils.mpl_utils import add_horizontal_slider
 
 
 def compute_int_scale(data, fs):
