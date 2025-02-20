@@ -91,7 +91,7 @@ def fit_D2(
         return model_D2(uu, rr, a20, c20, a21, c21, a22, c22, b20, b21, b22)
 
     if initial_guess is None:
-        initial_guess = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        initial_guess = [0, 0, 0, 0, 0, 0, 0, 0, -1e-4]
 
     bounds = (
         [-1, -1, -1, -1, -1, -1, 0, -np.inf, -np.inf],
