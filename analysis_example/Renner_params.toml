@@ -146,7 +146,7 @@ range = "!auto"
 	# 		  general.fs, general.taylor_scale, general.taylor_hyp_vel and
 	smallest_scale = "!auto"  # float or auto (=general.taylor_scale)
 	largest_scale = "!auto"  # float or auto (=general.int_scale)
-	scale_subsample_step = "!auto"  # int or auto (=p2.general.markov_scale_us)
+	scale_subsample_step = "!auto"  # int or auto (=p2.general.markov_scale_us with units)
 
 	# writes => entripies.npy
 
