@@ -146,10 +146,12 @@ range = "!auto"
 	# 		  general.fs, general.taylor_scale, general.taylor_hyp_vel and
 	smallest_scale = "!auto"  # float or auto (=general.taylor_scale)
 	largest_scale = "!auto"  # float or auto (=general.int_scale)
-	scale_subsample_step = "!auto"  # int or auto (=p2.general.markov_scale_us with units)
+	scale_subsample_step_us = "!auto"  # int or auto (=p2.general.markov_scale_us)
+	overlap_trajs_flag = false  # whatever you want to use the overlapping rutine or not
+	avalaible_ram_gb = 4.0  # float
 
-	# writes => entripies.npy
+	# writes => entropies.npy
 
 [p3.plot_entropy_pdfs]
-	# need => entripies.npy and
+	# need => entropies.npy and
 	nbins = 150  # int

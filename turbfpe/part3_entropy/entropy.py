@@ -25,10 +25,9 @@ def compute_entropy_autovalues_params(_, params):
         tmp = params.read("general.int_scale")
         params.write("p3.compute_entropy.largest_scale", tmp)
 
-    if params.is_auto("p3.compute_entropy.scale_subsample_step"):
-        to_us = params.read("general.fs") / params.read("general.taylor_hyp_vel")
-        tmp = params.read("p2.general.markov_scale_us") / to_us
-        params.write("p3.compute_entropy.scale_subsample_step", tmp)
+    if params.is_auto("p3.compute_entropy.scale_subsample_step_us"):
+        tmp = params.read("p2.general.markov_scale_us")
+        params.write("p3.compute_entropy.scale_subsample_step_us", tmp)
 
 
 def compute_entropy_params(data, params):
@@ -37,9 +36,11 @@ def compute_entropy_params(data, params):
     fs = params.read("general.fs")
     smallest_scale = params.read("p3.compute_entropy.smallest_scale")
     largest_scale = params.read("p3.compute_entropy.largest_scale")
-    scale_subsample_step = params.read("p3.compute_entropy.scale_subsample_step")
+    scale_subsample_step_us = params.read("p3.compute_entropy.scale_subsample_step_us")
     taylor_scale = params.read("general.taylor_scale")
     taylor_hyp_vel = params.read("general.taylor_hyp_vel")
+    overlap_trajs_flag = params.read('p3.compute_entropy.overlap_trajs_flag')
+    available_ram_gb = params.read('p3.compute_entropy.available_ram_gb')
 
     entropies, *_ = compute_entropy(
         data,
@@ -47,9 +48,11 @@ def compute_entropy_params(data, params):
         fs,
         smallest_scale,
         largest_scale,
-        scale_subsample_step,
+        scale_subsample_step_us,
         taylor_scale,
         taylor_hyp_vel,
+        overlap_trajs_flag,
+        available_ram_gb,
     )
 
     entropies.write_npz(params.format_output_filename("entropies.npz"))

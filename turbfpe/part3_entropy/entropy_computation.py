@@ -1,5 +1,7 @@
+import sys
 import matplotlib.pyplot as plt
 import numpy as np
+from tqdm import tqdm
 
 from ..utils.storing_clases import KMCoeffs, Entropies
 from ..utils.general import get_pdf
@@ -11,14 +13,14 @@ def compute_entropy(
     fs,
     smallest_scale,
     largest_scale,
-    scale_subsample_step,
+    scale_subsample_step_us,
     taylor_scale,
     taylor_hyp_vel,
+    overlap_trajs_flag,
+    available_ram_gb,
 ):
     """
     Computes the total entropy production (total_entropy = medium_entropy + system_entropy) for cascade trajs
-
-    (always using the independent, non-overlapping logic).
 
     Parameters
     ----------
@@ -35,9 +37,14 @@ def compute_entropy(
     scale_subsample_step_us : int
         Step size for subsampling scales.
     taylor_scale : float
-        Taylor length scale (used to normalice other scales).
+        Taylor length scale (used to normalize other scales).
     taylor_hyp_vel : float
-        Valocity used for distance to time conversion.
+        Velocity used for distance-to-time conversion.
+    overlap_trajs_flag : str, optional
+        'nonoverlap' for independent (non-overlapping) trajectories,
+        'overlap' for overlapping trajectories. Default is 'nonoverlap'.
+    available_ram_gb : float, optional
+        Available RAM in GB for chunking. Default is 8 GB.
 
     Returns
     -------
@@ -73,7 +80,7 @@ def compute_entropy(
 
     to_us = fs / taylor_hyp_vel
 
-    # Uso dimensionless scales.
+    # Use dimensionless scales.
     largest_scale_dimless = largest_scale / taylor_scale
     smallest_scale_dimless = smallest_scale / taylor_scale
 
@@ -86,78 +93,91 @@ def compute_entropy(
         np.abs(all_indep_scales_dimless[::-1] - largest_scale_dimless)
     )
     # For smallest_scale, we take the first occurrence.
-    smallest_index = np.argmin(np.abs(all_indep_scales_dimless - smallest_scale_dimless))
+    smallest_index = np.argmin(
+        np.abs(all_indep_scales_dimless - smallest_scale_dimless)
+    )
 
     trajectory_chunk_length = largest_index
 
-    # Take only the independen scales between the smallest and the largest scale.
+    # Take only the independent scales between the smallest and the largest scale.
     indep_scales_idxs = np.arange(smallest_index, largest_index + 1)[::-1]
     indep_scales = all_indep_scales_dimless[indep_scales_idxs]
 
-    # Independent (non-overlapping) increments
-    indep_incs_for_all_scales, incs_start_idxs = get_non_overlap_idep_incs(
-        data, indep_scales_idxs, trajectory_chunk_length
-    )
+    # Choose between overlapping or non-overlapping increments
+    if overlap_trajs_flag == 1:
+        chunks_iterator = get_overlap_incs(
+            data, indep_scales_idxs, trajectory_chunk_length, available_ram_gb
+        )
+    else:
+        chunks_iterator = get_non_overlap_idep_incs(
+            data, indep_scales_idxs, trajectory_chunk_length, available_ram_gb
+        )
 
-    # Indepentent increments for scales separated by (problably) one markovian step
-    scale_subsample_step_us = int(scale_subsample_step * fs / taylor_hyp_vel)
-    sampled_scales = indep_scales[::scale_subsample_step_us]
-    sampled_incs = indep_incs_for_all_scales[:, ::scale_subsample_step_us]
+    medium_entropy_l, system_entropy_l, total_entropy_l = [], [], []
+    for incs_for_all_scales, indep_scales_idxs in chunks_iterator:
+        # Independent increments for scales separated by (probably) one markovian step
+        sampled_scales = indep_scales[::scale_subsample_step_us]
+        sampled_incs = incs_for_all_scales[:, ::scale_subsample_step_us]
 
-    # Midpoint derivative (and properly evaluated incs and scales in those points)
-    scales_central, scale_spacing_central, incs_central, incs_deriv_central = (
-        compute_central_derivative(sampled_incs, sampled_scales)
-    )
+        # Midpoint derivative (and properly evaluated incs and scales in those points)
+        scales_central, scale_spacing_central, incs_central, incs_deriv_central = (
+            compute_central_derivative(sampled_incs, sampled_scales)
+        )
 
-    # Entropy
-    medium_entropy = compute_medium_entropy(
-        incs_deriv_central,
-        incs_central,
-        scales_central,
-        scale_spacing_central,
-        km_coeffs,
-    )
+        # Entropy
+        medium_entropy = compute_medium_entropy(
+            incs_deriv_central,
+            incs_central,
+            scales_central,
+            scale_spacing_central,
+            km_coeffs,
+        )
 
-    system_entropy = compute_system_entropy(incs_central)
+        system_entropy = compute_system_entropy(incs_central)
 
-    total_entropy = medium_entropy + system_entropy
-    total_entropy[~np.isfinite(total_entropy)] = np.nan
+        total_entropy = medium_entropy + system_entropy
+        total_entropy[~np.isfinite(total_entropy)] = np.nan
+
+        medium_entropy_l.append(medium_entropy)
+        system_entropy_l.append(system_entropy)
+        total_entropy_l.append(total_entropy)
+
+        # This works but for the moment I will not returned it
+        # Lagrangian and Hamiltonian quantities
+        # (
+        # lagrangian,
+        # action,
+        # momentum,
+        # hamiltonian,
+        # hamiltonian_derivative1,
+        # hamiltonian_derivative2,
+        # ) = compute_path_integral(
+        # incs_deriv_central,
+        # incs_central,
+        # scales_central,
+        # scale_spacing_central,
+        # km_coeffs,
+        # )
 
     entropies = Entropies(
-        medium_entropy=medium_entropy,
-        system_entropy=system_entropy,
-        total_entropy=total_entropy,
-    )
-
-    # Lagrnagian and hamiltonian quantities
-    (
-        lagrangian,
-        action,
-        momentum,
-        hamiltonian,
-        hamiltonian_derivative1,
-        hamiltonian_derivative2,
-    ) = compute_path_integral(
-        incs_deriv_central,
-        incs_central,
-        scales_central,
-        scale_spacing_central,
-        km_coeffs,
+        medium_entropy=np.concatenate(medium_entropy_l),
+        system_entropy=np.concatenate(system_entropy_l),
+        total_entropy=np.concatenate(total_entropy_l),
     )
 
     return (
         entropies,
-        indep_scales,
-        incs_start_idxs,
-        indep_scales_idxs,
-        scale_subsample_step_us,
-        indep_incs_for_all_scales,
-        lagrangian,
-        action,
-        momentum,
-        hamiltonian,
-        hamiltonian_derivative1,
-        hamiltonian_derivative2,
+        None,  # indep_scales,
+        None,  # incs_start_idxs,
+        None,  # indep_scales_idxs,
+        None,  # scale_subsample_step_us,
+        None,  # incs_for_all_scales,
+        None,  # lagrangian,
+        None,  # action,
+        None,  # momentum,
+        None,  # hamiltonian,
+        None,  # hamiltonian_derivative1,
+        None,  # hamiltonian_derivative2,
     )
 
 
@@ -165,6 +185,7 @@ def get_non_overlap_idep_incs(
     data: np.ndarray,
     indep_scales_idxs: np.ndarray,
     trajectory_chunk_length: int,
+    available_ram_gb: float,
 ):
     # TODO: Generalize this to data with other shapes
     data = data.flatten()
@@ -176,10 +197,46 @@ def get_non_overlap_idep_incs(
     valid_2 = (starts + indep_scales_idxs[-1]) < data_len
     valid_starts = starts[valid_1 & valid_2]
 
-    indep_incs_for_all_scales = (
-        data[valid_starts[:, None] + indep_scales_idxs] - data[valid_starts, None]
+    max_chunk_size = _compute_max_chunk_size(
+        available_ram_gb, n_scales=len(indep_scales_idxs)
     )
-    return indep_incs_for_all_scales, valid_starts
+
+    if max_chunk_size < 1:
+        raise MemoryError("Not enough RAM available for even one trajectory chunk.")
+
+    for i in tqdm(range(0, len(starts), max_chunk_size)):
+        chunk_starts = valid_starts[i : i + max_chunk_size]
+        chunk_incs = (
+            data[chunk_starts[:, None] + indep_scales_idxs] - data[chunk_starts, None]
+        )
+        yield chunk_incs, chunk_starts
+
+
+def get_overlap_incs(
+    data: np.ndarray,
+    indep_scales_idxs: np.ndarray,
+    trajectory_chunk_length: int,
+    available_ram_gb: float = 8,
+):
+    data = data.flatten()
+    data_len = len(data)
+
+    # For overlapping trajectories, use a step of 1
+    starts = np.arange(0, data_len - trajectory_chunk_length)
+
+    max_chunk_size = _compute_max_chunk_size(
+        available_ram_gb, n_scales=len(indep_scales_idxs)
+    )
+
+    if max_chunk_size < 1:
+        raise MemoryError("Not enough RAM available for even one trajectory chunk.")
+
+    for i in tqdm(range(0, len(starts), max_chunk_size)):
+        chunk_starts = starts[i : i + max_chunk_size]
+        chunk_incs = (
+            data[chunk_starts[:, None] + indep_scales_idxs] - data[chunk_starts, None]
+        )
+        yield chunk_incs, chunk_starts
 
 
 def compute_central_derivative(sampled_incs: np.ndarray, sampled_scales: np.ndarray):
@@ -248,6 +305,7 @@ def compute_system_entropy(incs_central):
             left=np.nan,
             right=np.nan,
         )
+
         system_entropy_i = -np.log(entropy_small_scale / entropy_large_scale)
         system_entropy.append(system_entropy_i)
     system_entropy = np.array(system_entropy)
@@ -345,6 +403,16 @@ def _D2_diff_diff(_: np.ndarray, scales: np.ndarray, kmcoeffs: KMCoeffs) -> np.n
     return D2_dd
 
 
+def _compute_max_chunk_size(available_ram_gb, n_scales):
+    available_ram_bytes = available_ram_gb * 1.07e9
+    bytes_per_value = 8  # assuming float64
+
+    max_chunk_size = int(np.floor(available_ram_bytes / (n_scales * bytes_per_value)))
+    max_chunk_size = max_chunk_size // 5  # need for temporal allocations
+
+    return max_chunk_size
+
+
 def plot_entropy_pdfs(entropies, nbins):
     medium_entropy = entropies.medium_entropy
     system_entropy = entropies.system_entropy
@@ -363,7 +431,6 @@ def plot_entropy_pdfs(entropies, nbins):
     # Create one figure with two subplots side by side
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
 
-
     hist_min = np.nanmin([medium_entropy, system_entropy, total_entropy])
     hist_max = np.nanmax([medium_entropy, system_entropy, total_entropy])
     bins = np.linspace(hist_min, hist_max, nbins)
@@ -374,7 +441,9 @@ def plot_entropy_pdfs(entropies, nbins):
     # Plot the PDFs on the second axis
     ax1.plot(centers_med, pdf_med, label=r"$\Delta S_{\mathrm{med}}$", linewidth=1.5)
     ax1.plot(centers_sys, pdf_sys, label=r"$\Delta S_{\mathrm{sys}}$", linewidth=1.5)
-    ax1.plot(centers_tot, pdf_tot, "k", label=r"$\Delta S_{\mathrm{tot}}$", linewidth=1.5)
+    ax1.plot(
+        centers_tot, pdf_tot, "--k", label=r"$\Delta S_{\mathrm{tot}}$", linewidth=1.5
+    )
     ax1.set_yscale("log")
     ax1.grid(True, alpha=0.4)
     ax1.set_xlabel("Entropy")
@@ -383,7 +452,6 @@ def plot_entropy_pdfs(entropies, nbins):
     ax1.set_title(r"$\langle \Delta S_{\mathrm{tot}}\rangle = $" f"{mean_ds:0.2f}")
     ax1.axvline(0, color="k", linestyle="-")
     ax1.legend()
-
 
     # Plot the errorbar plot on the first axis
     ax2.errorbar(
@@ -400,7 +468,11 @@ def plot_entropy_pdfs(entropies, nbins):
     ax2.set_xlabel(r"$N$")
     ax2.set_ylabel(r"$\langle e^{-\Delta S_{\mathrm{tot}}}\rangle_N$")
     mean_val = np.nanmean(np.exp(-total_entropy))
-    ax2.set_title(r"$\langle e^{-\Delta S_{\mathrm{tot}}}\rangle_{\max(N)} =$ " f"{mean_val:0.2f}", fontsize=12)
+    ax2.set_title(
+        r"$\langle e^{-\Delta S_{\mathrm{tot}}}\rangle_{\max(N)} =$ "
+        f"{mean_val:0.2f}",
+        fontsize=12,
+    )
     ax2.legend()
 
     plt.show()
