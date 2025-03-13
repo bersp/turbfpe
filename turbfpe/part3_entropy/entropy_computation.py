@@ -577,7 +577,7 @@ def ift_run_optimization(
             overlap_trajs_flag,
             available_ram_gb,
         )
-        # optimization_history["x_iter"].append(np.copy(x))
+        optimization_history["x_iter"].append(np.copy(x))
         optimization_history["error"].append(error)
         optimization_history["ift"].append(ift)
         return error
