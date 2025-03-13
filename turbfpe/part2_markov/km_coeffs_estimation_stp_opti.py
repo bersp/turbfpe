@@ -67,12 +67,17 @@ def compute_km_coeffs_estimation_stp_opti_one_scale(
 
     bounds = [(float(lb[i]), float(ub[i])) for i in range(len(init_D1_D2_values))]
 
+    def callback(xk):
+        print(f"Iteration: {callback.iter}, x: {xk}, f(x): {objective(xk)}")
+        callback.iter += 1
+
     opt_result = minimize(
         fun=objective_func,
         x0=init_D1_D2_values,
         method="L-BFGS-B",
         bounds=bounds,
         options={"maxiter": 300, "gtol": 1e-8},
+        callback=callback,
     )
 
     D1_D2_values_opt = opt_result.x
