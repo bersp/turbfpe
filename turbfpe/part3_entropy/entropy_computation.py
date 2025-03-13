@@ -1,13 +1,62 @@
-import sys
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.optimize import curve_fit, minimize
 from tqdm import tqdm
 
-from ..utils.storing_clases import KMCoeffs, Entropies
 from ..utils.general import get_pdf
+from ..utils.logger_setup import logger
+from ..utils.storing_clases import Entropies, KMCoeffs
 
 
+# --- Entropy calculation functions ---
 def compute_entropy(
+    data,
+    km_coeffs,
+    fs,
+    smallest_scale,
+    largest_scale,
+    scale_subsample_step_us,
+    taylor_scale,
+    taylor_hyp_vel,
+    overlap_trajs_flag,
+    available_ram_gb,
+):
+    medium_entropy, system_entropy, total_entropy = _compute_entropy(
+        data,
+        km_coeffs,
+        fs,
+        smallest_scale,
+        largest_scale,
+        scale_subsample_step_us,
+        taylor_scale,
+        taylor_hyp_vel,
+        overlap_trajs_flag,
+        available_ram_gb,
+    )
+
+    entropies = Entropies(
+        medium_entropy=medium_entropy,
+        system_entropy=system_entropy,
+        total_entropy=total_entropy,
+    )
+
+    return (
+        entropies,
+        None,  # indep_scales,
+        None,  # incs_start_idxs,
+        None,  # indep_scales_idxs,
+        None,  # scale_subsample_step_us,
+        None,  # incs_for_all_scales,
+        None,  # lagrangian,
+        None,  # action,
+        None,  # momentum,
+        None,  # hamiltonian,
+        None,  # hamiltonian_derivative1,
+        None,  # hamiltonian_derivative2,
+    )
+
+
+def _compute_entropy(
     data,
     km_coeffs,
     fs,
@@ -40,9 +89,7 @@ def compute_entropy(
         Taylor length scale (used to normalize other scales).
     taylor_hyp_vel : float
         Velocity used for distance-to-time conversion.
-    overlap_trajs_flag : str, optional
-        'nonoverlap' for independent (non-overlapping) trajectories,
-        'overlap' for overlapping trajectories. Default is 'nonoverlap'.
+    overlap_trajs_flag : float, optional
     available_ram_gb : float, optional
         Available RAM in GB for chunking. Default is 8 GB.
 
@@ -104,18 +151,46 @@ def compute_entropy(
     indep_scales = all_indep_scales_dimless[indep_scales_idxs]
 
     # Choose between overlapping or non-overlapping increments
-    if overlap_trajs_flag == 1:
-        chunks_iterator = get_overlap_incs(
+    if overlap_trajs_flag:
+        incs_for_all_scales_iterator = get_overlap_incs(
             data, indep_scales_idxs, trajectory_chunk_length, available_ram_gb
         )
     else:
-        chunks_iterator = get_non_overlap_idep_incs(
+        incs_for_all_scales_iterator = get_non_overlap_idep_incs(
             data, indep_scales_idxs, trajectory_chunk_length, available_ram_gb
         )
 
+    medium_entropy, system_entropy, total_entropy = compute_entropies_for_all_scales(
+        km_coeffs, incs_for_all_scales_iterator, indep_scales, scale_subsample_step_us
+    )
+
+    # This works but for the moment I will not returned it
+    # Lagrangian and Hamiltonian quantities
+    # (
+    # lagrangian,
+    # action,
+    # momentum,
+    # hamiltonian,
+    # hamiltonian_derivative1,
+    # hamiltonian_derivative2,
+    # ) = compute_path_integral(
+    # incs_deriv_central,
+    # incs_central,
+    # scales_central,
+    # scale_spacing_central,
+    # km_coeffs,
+    # )
+
+    return medium_entropy, system_entropy, total_entropy
+
+
+def compute_entropies_for_all_scales(
+    km_coeffs, incs_for_all_scales_iterator, indep_scales, scale_subsample_step_us
+):
     medium_entropy_l, system_entropy_l, total_entropy_l = [], [], []
-    for incs_for_all_scales, indep_scales_idxs in chunks_iterator:
+    for incs_for_all_scales in incs_for_all_scales_iterator:
         # Independent increments for scales separated by (probably) one markovian step
+
         sampled_scales = indep_scales[::scale_subsample_step_us]
         sampled_incs = incs_for_all_scales[:, ::scale_subsample_step_us]
 
@@ -142,43 +217,11 @@ def compute_entropy(
         system_entropy_l.append(system_entropy)
         total_entropy_l.append(total_entropy)
 
-        # This works but for the moment I will not returned it
-        # Lagrangian and Hamiltonian quantities
-        # (
-        # lagrangian,
-        # action,
-        # momentum,
-        # hamiltonian,
-        # hamiltonian_derivative1,
-        # hamiltonian_derivative2,
-        # ) = compute_path_integral(
-        # incs_deriv_central,
-        # incs_central,
-        # scales_central,
-        # scale_spacing_central,
-        # km_coeffs,
-        # )
+    medium_entropy = np.concatenate(medium_entropy_l)
+    system_entropy = np.concatenate(system_entropy_l)
+    total_entropy = np.concatenate(total_entropy_l)
 
-    entropies = Entropies(
-        medium_entropy=np.concatenate(medium_entropy_l),
-        system_entropy=np.concatenate(system_entropy_l),
-        total_entropy=np.concatenate(total_entropy_l),
-    )
-
-    return (
-        entropies,
-        None,  # indep_scales,
-        None,  # incs_start_idxs,
-        None,  # indep_scales_idxs,
-        None,  # scale_subsample_step_us,
-        None,  # incs_for_all_scales,
-        None,  # lagrangian,
-        None,  # action,
-        None,  # momentum,
-        None,  # hamiltonian,
-        None,  # hamiltonian_derivative1,
-        None,  # hamiltonian_derivative2,
-    )
+    return medium_entropy, system_entropy, total_entropy
 
 
 def get_non_overlap_idep_incs(
@@ -204,19 +247,19 @@ def get_non_overlap_idep_incs(
     if max_chunk_size < 1:
         raise MemoryError("Not enough RAM available for even one trajectory chunk.")
 
-    for i in tqdm(range(0, len(starts), max_chunk_size)):
+    for i in range(0, len(starts), max_chunk_size):
         chunk_starts = valid_starts[i : i + max_chunk_size]
         chunk_incs = (
             data[chunk_starts[:, None] + indep_scales_idxs] - data[chunk_starts, None]
         )
-        yield chunk_incs, chunk_starts
+        yield chunk_incs
 
 
 def get_overlap_incs(
     data: np.ndarray,
     indep_scales_idxs: np.ndarray,
     trajectory_chunk_length: int,
-    available_ram_gb: float = 8,
+    available_ram_gb: float,
 ):
     data = data.flatten()
     data_len = len(data)
@@ -236,7 +279,7 @@ def get_overlap_incs(
         chunk_incs = (
             data[chunk_starts[:, None] + indep_scales_idxs] - data[chunk_starts, None]
         )
-        yield chunk_incs, chunk_starts
+        yield chunk_incs
 
 
 def compute_central_derivative(sampled_incs: np.ndarray, sampled_scales: np.ndarray):
@@ -413,16 +456,307 @@ def _compute_max_chunk_size(available_ram_gb, n_scales):
     return max_chunk_size
 
 
-def plot_entropy_pdfs(entropies, nbins):
+# --- IFT Optimization functions ---
+def compute_km_coeffs_ift_opti(
+    data,
+    km_coeffs_stp_opti,
+    scales_for_optimization,
+    tol_D1,
+    tol_D2,
+    iter_max,
+    fs,
+    smallest_scale,
+    largest_scale,
+    scale_subsample_step_us,
+    taylor_scale,
+    taylor_hyp_vel,
+    overlap_trajs_flag,
+    available_ram_gb,
+):
+    scales_dimless = scales_for_optimization / taylor_scale
+    n_scales = scales_dimless.size
+    d11 = km_coeffs_stp_opti.eval_d11(scales_dimless)
+    d20 = km_coeffs_stp_opti.eval_d20(scales_dimless)
+    d21 = km_coeffs_stp_opti.eval_d21(scales_dimless)
+    d22 = km_coeffs_stp_opti.eval_d22(scales_dimless)
+    x0 = np.concatenate([d11, d20, d21, d22])
+    lower_bound = np.empty_like(x0)
+    upper_bound = np.empty_like(x0)
+    lower_bound[0:n_scales] = x0[0:n_scales] - np.abs(x0[0:n_scales] * tol_D1)
+    upper_bound[0:n_scales] = x0[0:n_scales] + np.abs(x0[0:n_scales] * tol_D1)
+    for i in range(1, 4):
+        start = i * n_scales
+        end = (i + 1) * n_scales
+        lower_bound[start:end] = x0[start:end] - np.abs(x0[start:end] * tol_D2)
+        upper_bound[start:end] = x0[start:end] + np.abs(x0[start:end] * tol_D2)
+    upper_bound[0:n_scales] = np.minimum(upper_bound[0:n_scales], 0)
+    lower_bound[n_scales : 2 * n_scales] = np.maximum(
+        lower_bound[n_scales : 2 * n_scales], 0
+    )
+    lower_bound[3 * n_scales : 4 * n_scales] = np.maximum(
+        lower_bound[3 * n_scales : 4 * n_scales], 0
+    )
+    _, optimization_history = ift_run_optimization(
+        x0,
+        lower_bound,
+        upper_bound,
+        iter_max,
+        scales_dimless,
+        n_scales,
+        km_coeffs_stp_opti,
+        largest_scale,
+        smallest_scale,
+        data,
+        fs,
+        scale_subsample_step_us,
+        taylor_scale,
+        taylor_hyp_vel,
+        overlap_trajs_flag,
+        available_ram_gb,
+    )
+    history_fval = np.array(optimization_history["error"])
+    best_index = np.argmin(history_fval)
+    best_x = optimization_history["x_iter"][best_index]
+    popt_d11 = fit_d1j(scales_dimless, best_x[0:n_scales], km_coeffs_stp_opti)
+    popt_d20, popt_d21, popt_d22 = fit_d2j(
+        scales_dimless, best_x, n_scales, km_coeffs_stp_opti
+    )
+
+    km_coeffs_ift_opti = KMCoeffs(
+        a11=popt_d11[0],
+        b11=popt_d11[2],
+        c11=popt_d11[1],
+        a20=popt_d20[0],
+        b20=popt_d20[2],
+        c20=popt_d20[1],
+        a21=popt_d21[0],
+        b21=popt_d21[2],
+        c21=popt_d21[1],
+        a22=popt_d22[0],
+        b22=popt_d22[2],
+        c22=popt_d22[1],
+    )
+
+    return km_coeffs_ift_opti, optimization_history
+
+
+def ift_run_optimization(
+    x0,
+    lower_bound,
+    upper_bound,
+    iter_max,
+    scales_dimless,
+    n_scales,
+    km_coeffs,
+    largest_scale,
+    smallest_scale,
+    data,
+    fs,
+    scale_subsample_step_us,
+    taylor_scale,
+    taylor_hyp_vel,
+    overlap_trajs_flag,
+    available_ram_gb,
+):
+    bounds = [(_l, _u) for _l, _u in zip(lower_bound, upper_bound)]
+    optimization_history = {"x_iter": [], "error": [], "ift": []}
+
+    def objective(x):
+        error, ift = ift_objective_function(
+            x,
+            scales_dimless,
+            n_scales,
+            km_coeffs,
+            largest_scale,
+            smallest_scale,
+            data,
+            fs,
+            scale_subsample_step_us,
+            taylor_scale,
+            taylor_hyp_vel,
+            overlap_trajs_flag,
+            available_ram_gb,
+        )
+        # optimization_history["x_iter"].append(np.copy(x))
+        optimization_history["error"].append(error)
+        optimization_history["ift"].append(ift)
+        return error
+
+    def callback(_):
+        iter_n = len(optimization_history["error"])
+        ift = optimization_history["ift"][-1]
+        error = optimization_history["error"][-1]
+        logger.info(
+            "\n"
+            + "-" * 50
+            + f"\n# Evaluations: {iter_n}\nIFT: {ift}\nError: {error}\n"
+            + "-" * 50
+            + "\n"
+        )
+
+    res = minimize(
+        objective,
+        x0,
+        method="L-BFGS-B",
+        bounds=bounds,
+        options={"maxiter": iter_max, "gtol": 1e-8},
+        callback=callback,
+    )
+    optimization_history["n_iter"] = np.arange(len(optimization_history["error"]))
+    return res, optimization_history
+
+
+def ift_objective_function(
+    x0,
+    scales_dimless,
+    n_scales,
+    km_coeffs,
+    largest_scale,
+    smallest_scale,
+    data,
+    fs,
+    scale_subsample_step_us,
+    taylor_scale,
+    taylor_hyp_vel,
+    overlap_trajs_flag,
+    available_ram_gb,
+):
+    # Fit parameters.
+    popt_d11 = fit_d1j(scales_dimless, x0[:n_scales], km_coeffs)
+    popt_d20, popt_d21, popt_d22 = fit_d2j(scales_dimless, x0, n_scales, km_coeffs)
+
+    # Create km_coeffs object.
+    km_coeffs = KMCoeffs(
+        a11=popt_d11[0],
+        b11=popt_d11[2],
+        c11=popt_d11[1],
+        a20=popt_d20[0],
+        b20=popt_d20[2],
+        c20=popt_d20[1],
+        a21=popt_d21[0],
+        b21=popt_d21[2],
+        c21=popt_d21[1],
+        a22=popt_d22[0],
+        b22=popt_d22[2],
+        c22=popt_d22[1],
+    )
+
+    # Compute entropy.
+    _, _, total_entropy = _compute_entropy(
+        data,
+        km_coeffs,
+        fs,
+        smallest_scale,
+        largest_scale,
+        scale_subsample_step_us,
+        taylor_scale,
+        taylor_hyp_vel,
+        overlap_trajs_flag,
+        available_ram_gb,
+    )
+
+    # Remove values that would cause overflow in exp(-total_entropy).
+    threshold = -np.log(np.finfo(np.float64).max)
+    total_entropy = total_entropy[total_entropy >= threshold]
+    if total_entropy.size == 0:
+        return 1e10, np.nan
+
+    # Compute exp(-total_entropy) once.
+    exp_neg = np.exp(-total_entropy)
+    ift = np.nanmean(exp_neg)
+
+    # Precompute cumulative sums so that slice means can be computed quickly.
+    cumsum_exp = np.cumsum(exp_neg)
+    size = total_entropy.size
+
+    # Fast average using cumulative sums.
+    def get_mean(n):
+        return cumsum_exp[n - 1] / n
+
+    # Use cumulative sum to compute error for each portion.
+    def compute_error(portion):
+        n = int(np.ceil(portion * size))
+        return np.abs(1 - get_mean(n)) if n > 5000 else 0.0
+
+    error_60 = compute_error(0.6)
+    error_70 = compute_error(0.7)
+    error_80 = compute_error(0.8)
+    n90 = int(np.ceil(0.9 * size))
+    error_90 = np.abs(1 - get_mean(n90)) if n90 > 0 else 0.0
+    error_100 = np.abs(1 - ift)
+
+    error = error_60 + error_70 + error_80 + error_90 + error_100
+
+    return error, ift
+
+
+def fit_d1j(scales_dimless, y, km_coeffs):
+    p0 = [km_coeffs.a11, km_coeffs.c11, km_coeffs.b11]
+    lower_bounds = [-2, -2, -np.inf]
+    upper_bounds = [2, 2, 0]
+    bounds = (lower_bounds, upper_bounds)
+    popt_d11, _ = curve_fit(
+        model_d11, scales_dimless, y, p0=p0, bounds=bounds, maxfev=1000
+    )
+    return popt_d11
+
+
+def fit_d2j(scales_dimless, y, n_scales, km_coeffs):
+    y_d20 = y[n_scales : 2 * n_scales]
+    y_d21 = y[2 * n_scales : 3 * n_scales]
+    y_d22 = y[3 * n_scales : 4 * n_scales]
+    p0_d20 = [km_coeffs.a20, km_coeffs.c20, km_coeffs.b20]
+    bounds_d20 = ([-1, -1, 0], [1, 1, np.inf])
+    popt_d20, _ = curve_fit(
+        model_d20, scales_dimless, y_d20, p0=p0_d20, bounds=bounds_d20, maxfev=1000
+    )
+    p0_d21 = [km_coeffs.a21, km_coeffs.c21, km_coeffs.b21]
+    bounds_d21 = ([-1, -1, -np.inf], [1, 1, np.inf])
+    popt_d21, _ = curve_fit(
+        model_d21, scales_dimless, y_d21, p0=p0_d21, bounds=bounds_d21, maxfev=1000
+    )
+    p0_d22 = [km_coeffs.a22, km_coeffs.c22, km_coeffs.b22]
+    bounds_d22 = ([-1, -1, -np.inf], [1, 1, 0])
+    popt_d22, _ = curve_fit(
+        model_d22, scales_dimless, y_d22, p0=p0_d22, bounds=bounds_d22, maxfev=1000
+    )
+    return popt_d20, popt_d21, popt_d22
+
+
+def model_d11(scales_dimless, a11, c11, b11):
+    return a11 * scales_dimless**b11 + c11
+
+
+def model_d20(scales_dimless, a20, c20, b20):
+    return a20 * scales_dimless**b20 + c20
+
+
+def model_d21(scales_dimless, a21, c21, b21):
+    return a21 * scales_dimless**b21 + c21
+
+
+def model_d22(scales_dimless, a22, c22, b22):
+    return a22 * scales_dimless**b22 + c22
+
+
+# --- Plot functions ---
+def plot_entropy_and_ift(entropies, nbins):
     medium_entropy = entropies.medium_entropy
     system_entropy = entropies.system_entropy
     total_entropy = entropies.total_entropy
+    # l, u = -5, 9
+    # idx = (l < total_entropy) & (total_entropy < u)
+    # idx = np.abs(total_entropy) < 5*np.nanstd(np.abs(total_entropy))
+    # medium_entropy = medium_entropy[idx]
+    # system_entropy = system_entropy[idx]
+    # total_entropy = total_entropy[idx]
 
-    N = len(total_entropy)
-    NN = 20
-    sample_sizes = np.round(np.logspace(1, np.log10(N), NN)).astype(int)
-    ft_values = np.empty(NN)
-    ft_errors = np.empty(NN)
+    n_samps = 20
+    sample_sizes = np.round(
+        np.logspace(1, np.log10(total_entropy.size), n_samps)
+    ).astype(int)
+    ft_values = np.empty(n_samps)
+    ft_errors = np.empty(n_samps)
     for i, size in enumerate(sample_sizes):
         slice_data = np.exp(-total_entropy[:size])
         ft_values[i] = np.nanmean(slice_data)
@@ -453,7 +787,6 @@ def plot_entropy_pdfs(entropies, nbins):
     ax1.axvline(0, color="k", linestyle="-")
     ax1.legend()
 
-    # Plot the errorbar plot on the first axis
     ax2.errorbar(
         sample_sizes,
         ft_values,
@@ -462,7 +795,7 @@ def plot_entropy_pdfs(entropies, nbins):
         linewidth=1.2,
         label=r"$\langle e^{-\Delta S_{\mathrm{tot}}}\rangle_N$",
     )
-    ax2.axhline(1.0, color="k", linestyle="--", linewidth=1.0, label="IFT = 1")
+    ax2.axhline(1.0, color="k", linestyle="--", linewidth=1.0, label="ift = 1")
     ax2.set_xscale("log")
     ax2.grid(True, alpha=0.4)
     ax2.set_xlabel(r"$N$")

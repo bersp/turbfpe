@@ -68,7 +68,9 @@ class KMCoeffsEstimation:
     D4: npt.NDArray[np.float64]
     D1_opti: npt.NDArray[np.float64] = field(default_factory=lambda: np.array([]))
     D2_opti: npt.NDArray[np.float64] = field(default_factory=lambda: np.array([]))
-    valid_idxs: npt.NDArray[np.bool_] = field(default_factory=lambda: np.array([], dtype=np.bool_))
+    valid_idxs: npt.NDArray[np.bool_] = field(
+        default_factory=lambda: np.array([], dtype=np.bool_)
+    )
 
     def set_D1_opti(self, value: npt.NDArray[np.float64]) -> None:
         self.D1_opti = value
@@ -82,34 +84,46 @@ class KMCoeffsEstimation:
 
 @dataclass
 class KMCoeffs:
-    a11: float
-    b11: float
-    c11: float
-    a20: float
-    b20: float
-    c20: float
-    a21: float
-    b21: float
-    c21: float
-    a22: float
-    b22: float
-    c22: float
-    a11_conf: npt.NDArray[np.float64]
-    b11_conf: npt.NDArray[np.float64]
-    c11_conf: npt.NDArray[np.float64]
-    a20_conf: npt.NDArray[np.float64]
-    b20_conf: npt.NDArray[np.float64]
-    c20_conf: npt.NDArray[np.float64]
-    a21_conf: npt.NDArray[np.float64]
-    b21_conf: npt.NDArray[np.float64]
-    c21_conf: npt.NDArray[np.float64]
-    a22_conf: npt.NDArray[np.float64]
-    b22_conf: npt.NDArray[np.float64]
-    c22_conf: npt.NDArray[np.float64]
+    a11: float  # co["a"][0]
+    b11: float  # co["ea"][0]
+    c11: float  # co["a"][1]
+    a20: float  # co["b"][0]
+    b20: float  # co["eb"][0]
+    c20: float  # co["b"][1]
+    a21: float  # co["b"][2]
+    b21: float  # co["eb"][1]
+    c21: float  # co["b"][3]
+    a22: float  # co["b"][4]
+    b22: float  # co["eb"][2]
+    c22: float  # co["b"][5]
+    a11_conf: npt.NDArray[np.float64] = field(default_factory=lambda: np.array([]))
+    b11_conf: npt.NDArray[np.float64] = field(default_factory=lambda: np.array([]))
+    c11_conf: npt.NDArray[np.float64] = field(default_factory=lambda: np.array([]))
+    a20_conf: npt.NDArray[np.float64] = field(default_factory=lambda: np.array([]))
+    b20_conf: npt.NDArray[np.float64] = field(default_factory=lambda: np.array([]))
+    c20_conf: npt.NDArray[np.float64] = field(default_factory=lambda: np.array([]))
+    a21_conf: npt.NDArray[np.float64] = field(default_factory=lambda: np.array([]))
+    b21_conf: npt.NDArray[np.float64] = field(default_factory=lambda: np.array([]))
+    c21_conf: npt.NDArray[np.float64] = field(default_factory=lambda: np.array([]))
+    a22_conf: npt.NDArray[np.float64] = field(default_factory=lambda: np.array([]))
+    b22_conf: npt.NDArray[np.float64] = field(default_factory=lambda: np.array([]))
+    c22_conf: npt.NDArray[np.float64] = field(default_factory=lambda: np.array([]))
+
+    def eval_d11(self, r):
+        return self.a11 * (r**self.b11) + self.c11
+
+    def eval_d20(self, r):
+        return self.a20 * (r**self.b20) + self.c20
+
+    def eval_d21(self, r):
+        return self.a21 * (r**self.b21) + self.c21
+
+    def eval_d22(self, r):
+        return self.a22 * (r**self.b22) + self.c22
 
     def eval_D1(self, u, r):
         """D1(u, r) = [a11 * r^b11 + c11] * u"""
-        d11 = self.a11 * (r**self.b11) + self.c11
+        d11 = self.eval_d11(r)
         return d11 * u
 
     def eval_D2(self, u, r):
@@ -118,9 +132,9 @@ class KMCoeffs:
                  + [a21 * r^b21 + c21] * u
                  + [a22 * r^b22 + c22] * u^2
         """
-        d20 = self.a20 * (r**self.b20) + self.c20
-        d21 = self.a21 * (r**self.b21) + self.c21
-        d22 = self.a22 * (r**self.b22) + self.c22
+        d20 = self.eval_d20(r)
+        d21 = self.eval_d21(r)
+        d22 = self.eval_d22(r)
         return d20 + d21 * u + d22 * (u**2)
 
     def write_npz(self, filename: str) -> None:
@@ -146,6 +160,7 @@ class KMCoeffs:
                 data_dict[key] = value
         data.close()
         return cls(**data_dict)
+
 
 @dataclass
 class Entropies:
@@ -201,7 +216,6 @@ class DataClassGroup(Generic[T]):
             where shorter arrays are padded with np.nan on the right.
         """
 
-
         is_scalar = np.asarray(getattr(self._items[0], attr_name)).ndim == 0
         if is_scalar:
             return np.array([getattr(item, attr_name) for item in self._items])
@@ -216,9 +230,7 @@ class DataClassGroup(Generic[T]):
         # Determine the maximum size along the first dimension.
         max_len = max(arr.shape[0] for arr in arrays)
         # Get the remaining dimensions, if any.
-        result = np.full(
-            (len(arrays), max_len), np.nan, dtype=arrays[0].dtype
-        )
+        result = np.full((len(arrays), max_len), np.nan, dtype=arrays[0].dtype)
         for i, arr in enumerate(arrays):
             length = arr.shape[0]
             result[i, :length, ...] = arr
