@@ -237,7 +237,7 @@ def compute_km_coeffs_fit_params(_, params):
         density_funcs_group, km_coeffs_est_group, nbins, taylor_scale
     )
 
-    km_coeffs.write_npz(params.format_output_filename("km_coeffs.npz"))
+    km_coeffs.write_npz(params.format_output_filename("km_coeffs_stp_opti.npz"))
     km_coeffs_no_opti.write_npz(params.format_output_filename("km_coeffs_no_opti.npz"))
 
 
@@ -250,7 +250,7 @@ def plot_km_coeffs_fit_params(_, params):
         params.format_output_filename("km_coeffs_estimation.npz")
     )
 
-    km_coeffs = KMCoeffs.load_npz(params.format_output_filename("km_coeffs.npz"))
+    km_coeffs = KMCoeffs.load_npz(params.format_output_filename("km_coeffs_stp_opti.npz"))
 
     nbins = params.read("p2.general.nbins")
     taylor_scale = params.read("general.taylor_scale")
