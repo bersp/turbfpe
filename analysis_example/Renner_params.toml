@@ -26,8 +26,13 @@ part2_markov = [
 
 part3_entropy = [
 	"compute_entropy_autovalues",
-	"compute_entropy",
-	"plot_entropy_pdfs",
+
+	"compute_entropy_stp_opti",
+	"plot_entropy_and_ift_for_stp_opti",
+
+	"compute_km_coeffs_ift_opti",
+	"compute_entropy_ift_opti",
+	"plot_entropy_and_ift_for_ift_opti",
 ]
 
 [config.io]
@@ -133,7 +138,7 @@ range = "!auto"
 	# need => km_coeffs_estimation.npz, density_functions.npz and
 	#         p2.general.nbins and general.taylor_scale
 	
-	# writes => km_coeffs.npz and km_coeffs_noopt.npz
+	# writes => km_coeffs_stp_opti.npz and km_coeffs_no_opti.npz
 
 [p2.plot_km_coeffs_fit]
 	# need => km_coeffs_estimation.npz, density_functions.npz, km_coeffs.npz and
@@ -141,17 +146,32 @@ range = "!auto"
 
 
 # --- PART 3: Entropy ---- #
-[p3.compute_entropy]
-	# need => km_coeffs.npz and
-	# 		  general.fs, general.taylor_scale, general.taylor_hyp_vel and
+[p3.general]
 	smallest_scale = "!auto"  # float or auto (=general.taylor_scale)
 	largest_scale = "!auto"  # float or auto (=general.int_scale)
 	scale_subsample_step_us = "!auto"  # int or auto (=p2.general.markov_scale_us)
 	overlap_trajs_flag = false  # whatever you want to use the overlapping rutine or not
-	avalaible_ram_gb = 4.0  # float
+	available_ram_gb = 4.0  # float (for most use cases this is only important if you use overlap_trajs_flag=true)
 
-	# writes => entropies.npy
+[p3.compute_km_coeffs_ift_opti]
+	# need => km_coeffs_stp_opti.npz, km_coeffs_estimation.npz (only to get the scales to use) and
+	#         p3.general.smallest_scale, p3.general.largest_scale,
+	#         p3.general.scale_subsample_step_us, p3.general.overlap_trajs_flag, p3.general.avalaiable_ram_gb
+	#         general.fs, general.taylor_scale, general.taylor_hyp_vel and
+	tol_D1 = 0.1
+	tol_D2 = 0.1
+	iter_max = 5
 
-[p3.plot_entropy_pdfs]
+[p3.compute_entropy]
+	# need => km_coeffs<...>.npz and
+	#         p3.general.smallest_scale, p3.general.largest_scale,
+	#         p3.general.scale_subsample_step_us, p3.general.overlap_trajs_flag,
+	#         p3.available_ram_gb and
+	#         general.fs, general.taylor_scale, general.taylor_hyp_vel and
+
+	# writes => entropies<...>.npy
+
+[p3.plot_entropy_and_ift]
 	# need => entropies.npy and
 	nbins = 150  # int
+
