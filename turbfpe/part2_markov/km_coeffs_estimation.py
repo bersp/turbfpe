@@ -120,7 +120,7 @@ def compute_km_coeffs_estimation(
         )
 
         # Create a KMCoeffsEstimation instance with the computed coefficients and errors
-        km_instance = KMCoeffsEstimation(
+        km_coeffs_est = KMCoeffsEstimation(
             scale=cond_moments.scale,
             scale_us=cond_moments.scale_us,
             scale_short_us=cond_moments.scale_short_us,
@@ -135,6 +135,6 @@ def compute_km_coeffs_estimation(
             # compute_km_coeffs_est_stp_optimization
             # and will have the same size as valid_idxs.
         )
-        km_coeffs_est_group.add(km_instance)
+        km_coeffs_est_group.add(km_coeffs_est)
 
     return km_coeffs_est_group
