@@ -36,16 +36,20 @@ part3_entropy = [
 ]
 
 [config.io]
-save_path = "processed_data/"
+processed_data_save_path = "processed_data/"
+figures_save_path = "figures/"
 save_filenames_prefix = "Renner"
+
 
 [config.misc]
 mpl.usetex = false
 mpl.constrained_layout = true
+mpl.show_figures = true
+mpl.save_figures = true
 
 [data]
 io.path = "./Renner_8000Hz_filter.npy"  # str.
-prop_to_use = 1.0  # float (from 0.0 to 1.0) or [float, float] ndim=2
+prop_to_use = 1.0  # float (from 0.0 to 1.0) or [float, float] if ndim=2
 opts.norm_data = true  # bool. Normalice data with sigma_inf.
 opts.flip_data = true  # bool or auto (not implemented yet).
 shape = "!auto"
@@ -95,6 +99,7 @@ range = "!auto"
 	# need => data, general.fs, general.taylor_hyp_vel and
 	nbins = "!auto"  # int or auto (same as p2.general.nbins).
 	indep_scale = "!auto"  # float or auto (need general.int_scale).
+	end_scale = "!auto"  # float or auto (=p2.compute_wilcoxon_test.indep_scale).
 	n_interv_sec = 5  # int. Larger is slower but reduces result noise.
 
 	# writes wilcoxon_test.npy
@@ -103,7 +108,7 @@ range = "!auto"
 	# need => wilcoxon_test.npy, p2.general.markov_scale_us
 
 [p2.compute_conditional_moments_estimation]
-	# need => p2.general.markov_scale_us, p2.general.nbins
+	# need => p2.general.markov_scale_us, p2.general.nbins, p2.general.min_events and
 	#  		  general.fs, general.highest_freq, general.taylor_scale, general.taylor_hyp_vel and
 	n_scale_steps = 9  # int
 
@@ -147,31 +152,37 @@ range = "!auto"
 
 # --- PART 3: Entropy ---- #
 [p3.general]
+	prop_to_use = [1.0, 1.0] # relative to data.prop_to_use, use it to optimize ram and cpu
+
 	smallest_scale = "!auto"  # float or auto (=general.taylor_scale)
 	largest_scale = "!auto"  # float or auto (=general.int_scale)
 	scale_subsample_step_us = "!auto"  # int or auto (=p2.general.markov_scale_us)
 	overlap_trajs_flag = false  # whatever you want to use the overlapping rutine or not
 	available_ram_gb = 4.0  # float (for most use cases this is only important if you use overlap_trajs_flag=true)
 
-[p3.compute_km_coeffs_ift_opti]
-	# need => km_coeffs_stp_opti.npz, km_coeffs_estimation.npz (only to get the scales to use) and
-	#         p3.general.smallest_scale, p3.general.largest_scale,
-	#         p3.general.scale_subsample_step_us, p3.general.overlap_trajs_flag, p3.general.avalaiable_ram_gb
-	#         general.fs, general.taylor_scale, general.taylor_hyp_vel and
-	tol_D1 = 0.1
-	tol_D2 = 0.1
-	iter_max = 5
-
 [p3.compute_entropy]
-	# need => km_coeffs<...>.npz and
+	# need => km_coeffs_(stp|ift)_opti.npz and
 	#         p3.general.smallest_scale, p3.general.largest_scale,
 	#         p3.general.scale_subsample_step_us, p3.general.overlap_trajs_flag,
 	#         p3.available_ram_gb and
 	#         general.fs, general.taylor_scale, general.taylor_hyp_vel and
 
-	# writes => entropies<...>.npy
+	# writes => entropies_(stp|ift)_opti.npy
 
-[p3.plot_entropy_and_ift]
+[p3.plot_entropy_and_ift_for_ift_opti]
 	# need => entropies.npy and
-	nbins = 150  # int
+	nbins = 300  # int
+
+[p3.compute_km_coeffs_ift_opti]
+	# need => km_coeffs_stp_opti.npz, km_coeffs_estimation.npz (only to get the scales to use) and
+	#         p3.general.smallest_scale, p3.general.largest_scale,
+	#         p3.general.scale_subsample_step_us, p3.general.avalaiable_ram_gb
+	#         general.fs, general.taylor_scale, general.taylor_hyp_vel and
+	tol_D1 = 0.1
+	tol_D2 = 0.1
+	iter_max = 5
+
+[p3.plot_entropy_and_ift_for_stp_opti]
+	# need => entropies.npy and
+	nbins = 300  # int
 
