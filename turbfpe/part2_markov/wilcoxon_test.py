@@ -6,14 +6,14 @@ from tqdm import tqdm
 from .markov_auxiliar_functions import (
     calc_incs_3tau,
     compute_indep_incs_non_square_data,
-    compute_indep_incs_square_data,
+    compute_indep_incs,
     distribution,
 )
 
 SQRT_2_DIV_PI = np.sqrt(2 / np.pi)
 
 
-def compute_wilcoxon_test(data, fs, nbins, taylor_hyp_vel, indep_scale, n_interv_sec=1):
+def compute_wilcoxon_test(data, fs, nbins, taylor_hyp_vel, indep_scale, end_scale, n_interv_sec=1):
 
     to_us = fs / taylor_hyp_vel # convert to unit of samples
 
@@ -21,45 +21,42 @@ def compute_wilcoxon_test(data, fs, nbins, taylor_hyp_vel, indep_scale, n_interv
     indep_scale_us = round(indep_scale*to_us)
     n_interv = data.shape[1] // indep_scale_us - 1
 
-    # calculate delta_arr (in unit of samples)
+    # calculate delta_arr_us (in unit of samples)
     n_increments = 10 * nbins
     start_scale = taylor_hyp_vel / fs  # this is 1 in unit of samples
-    end_scale = indep_scale
-    delta_arr = (
+    delta_arr_us = (
         np.logspace(
             np.log10(start_scale),
             np.log10(end_scale),
             n_increments,
         )
     ) * to_us
-    delta_arr = np.unique(np.floor(delta_arr).astype(int))
-    delta_arr = delta_arr[delta_arr != 0]
+    delta_arr_us = np.unique(np.floor(delta_arr_us).astype(int))
+    delta_arr_us = delta_arr_us[delta_arr_us != 0]
+
 
     # calculate where starts the independent intervals
     start_interv_idx = np.arange(0, indep_scale_us * n_interv, indep_scale_us)
 
-    # if all data in the array have the same effective scale
-    data_is_square = np.sum(np.isnan(data[:, -1])) == 0
+    
+    if n_interv_sec >= indep_scale_us:
+        raise ValueError("n_inter_sec shoud be smallen than indep_scale_us")
 
     start_interv_sec_list = [
         start_interv_idx + n
-        for n in range(0, indep_scale_us, indep_scale_us // n_interv_sec)
+        for n in range(0, n_interv_sec, 1)
+        # for n in range(0, indep_scale_us, indep_scale_us // n_interv_sec)
     ]
 
-    wt_arr = np.zeros((len(start_interv_sec_list), delta_arr.size))
-    for ii, delta in enumerate(tqdm(delta_arr)):
+    wt_arr = np.zeros((len(start_interv_sec_list), delta_arr_us.size))
+    for ii, delta in enumerate(tqdm(delta_arr_us)):
         for jj, start_interv_sec in enumerate(start_interv_sec_list):
             # do the wilcoxon test for the delta selected
             # at different independent intervals.
 
-            if data_is_square:
-                inc0, inc1, inc2 = compute_indep_incs_square_data(
-                    data, start_interv_sec, delta
-                )
-            else:
-                inc0, inc1, inc2 = compute_indep_incs_non_square_data(
-                    data, start_interv_sec, delta
-                )
+            inc0, inc1, inc2 = compute_indep_incs(
+                data, start_interv_sec, delta
+            )
 
             # bins1
             count1, bins1_tmp = np.histogram(inc1, bins=nbins)
@@ -70,13 +67,14 @@ def compute_wilcoxon_test(data, fs, nbins, taylor_hyp_vel, indep_scale, n_interv
             ]
 
             # bin0 (only one, i.e. idx_c0)
-            idx_c0 = np.abs(inc0) < bins1_width / 2
+            # idx_c0 = np.abs(inc0) < bins1_width / 2
+            idx_c0 = np.abs(inc0) < 2*bins1_width
 
             # mean of the wilcoxon test stats over all bins1
             tmp = wilcoxon_test_multiple_bins(inc1, inc2, bins1, idx_c0)
             wt_arr[jj, ii] = tmp
 
-    return delta_arr, wt_arr
+    return delta_arr_us, wt_arr
 
 
 def wilcoxon_test_2samp(p1, p2):
@@ -129,7 +127,7 @@ def wilcoxon_test_multiple_bins(inc1, inc2, bins1, idx_c0):
     return np.mean(T_list)
 
 
-def plot_wilcoxon_test(data, delta_arr, wt_arr, markov_scale_us):
+def plot_wilcoxon_test(data, delta_arr_us, wt_arr, markov_scale_us):
     # TODO: Improve plot and add options to see this in different units
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
 
@@ -137,12 +135,17 @@ def plot_wilcoxon_test(data, delta_arr, wt_arr, markov_scale_us):
     ax1.axvline(markov_scale_us, c="C3", ls="--", lw=2, label=r"$\Delta_\text{EM}$")
     ax1.set_xlabel(r"$\Delta$ [samp]")
     ax1.set_ylabel("Wilcoxon-Test")
-    ax1.loglog(delta_arr, wt_arr, "ok")
+
+    for i, wt in enumerate(wt_arr):
+        ax1.loglog(delta_arr_us, wt, ".-k", alpha=0.2)
+
+
+    wt_arr_mean = np.nanmean(wt_arr, axis=0)
+    ax1.loglog(delta_arr_us, wt_arr_mean, ".-", color="#C95E61", lw=2)
+
     ax1.legend()
 
-    # _plot_pdf_on_markov_scale(ax2, data, markov_scale_us, u0=-1)
-
-    plt.show()
+    _plot_pdf_on_markov_scale(ax2, data, markov_scale_us, u0=0)
 
 
 def _plot_pdf_on_markov_scale(ax, data, markov_scale_us, u0):
@@ -194,6 +197,6 @@ def _plot_pdf_on_markov_scale(ax, data, markov_scale_us, u0):
     # legend
     legend_elements = [
         Line2D([0], [0], color="k", lw=3, label="$P(u_2|u_1)$"),
-        Line2D([0], [0], color="C3", lw=3, label="$P(u_2|u_1|u_0=-1)$"),
+        Line2D([0], [0], color="C3", lw=3, label=f"$P(u_2|u_1|u_0={u0})$"),
     ]
     ax.legend(handles=legend_elements)

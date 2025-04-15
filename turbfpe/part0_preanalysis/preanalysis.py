@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.stats as stats
 
+from ..utils.logger_setup import logger
 from ..utils.parameters_utils import Params
 from .preanalysis_functions import compute_int_scale
 
@@ -9,16 +10,23 @@ def exec_rutine(params_file):
     params = Params(params_file)
     data = params.load_data(flat=False, ignore_opts=True)
     params.write("data.shape", data.shape)
-    data = data.flatten()
+    data = data.compressed()
 
-    for func in params.read("rutine.part0_preanalysis"):
-        func = globals()[f"{func}_params"]
+    for func_str in params.read("rutine.part0_preanalysis"):
+        logger.info("-" * 80)
+        logger.info(f"----- START {func_str} (PART 0)")
+
+        func = globals()[f"{func_str}_params"]
         func(data, params)
+
+        logger.info(f"----- END {func_str} (PART 0)")
+        logger.info("-" * 80)
 
 
 def compute_int_scale_params(data, params: Params):
     fs = params.read("general.fs")
-    return compute_int_scale(data, fs)
+    taylor_hyp_vel = params.read("general.taylor_hyp_vel")
+    return compute_int_scale(data, fs, taylor_hyp_vel)
 
 
 def compute_and_write_data_stats_params(data, params: Params):

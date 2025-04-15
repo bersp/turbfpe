@@ -21,7 +21,8 @@ def calc_incs_2tau(v, tau0, tau1):
     inc0 = v[:, tau0:tsize] - v[:, 0 : tsize - tau0]
     inc1 = v[:, tau1 : tsize - d_01] - v[:, 0 : tsize - tau0]
 
-    inc0, inc1 = inc0.flatten(), inc1.flatten()
+    inc1.mask = inc0.mask
+    inc0, inc1 = inc0.compressed(), inc1.compressed()
 
     return inc0, inc1
 
@@ -40,12 +41,14 @@ def calc_incs_3tau(v, tau0, tau1, tau2):
     inc1 = v[:, tau1 : tsize - d_01] - v[:, 0 : tsize - tau0]
     inc2 = v[:, tau2 : tsize - d_02] - v[:, 0 : tsize - tau0]
 
-    inc0, inc1, inc2 = inc0.flatten(), inc1.flatten(), inc2.flatten()
+    inc1.mask = inc0.mask
+    inc2.mask = inc0.mask
+    inc0, inc1, inc2 = inc0.compressed(), inc1.compressed(), inc2.compressed()
 
     return inc0, inc1, inc2
 
 
-def compute_indep_incs_square_data(data, start_interv_sec, delta):
+def compute_indep_incs(data, start_interv_sec, delta):
     # avoid index out of range
     start_interv_sec = start_interv_sec[start_interv_sec + 3 * delta < data.shape[1]]
     data_start_intervals = data[:, start_interv_sec]
@@ -53,7 +56,11 @@ def compute_indep_incs_square_data(data, start_interv_sec, delta):
     inc0 = data[:, start_interv_sec + 3 * delta] - data_start_intervals
     inc1 = data[:, start_interv_sec + 2 * delta] - data_start_intervals
     inc2 = data[:, start_interv_sec + 1 * delta] - data_start_intervals
-    inc0, inc1, inc2 = inc0.flatten(), inc1.flatten(), inc2.flatten()
+
+    inc1.mask = inc0.mask
+    inc2.mask = inc0.mask
+
+    inc0, inc1, inc2 = inc0.compressed(), inc1.compressed(), inc2.compressed()
 
     return inc0, inc1, inc2
 
@@ -65,10 +72,10 @@ def compute_indep_incs_non_square_data(data, start_interv_sec, delta):
 
     # only use data with at least 3*delta data points
     idx = np.sum(~np.isnan(data), axis=1) > 3 * delta
-    d1_a, d0_a = data[idx], data_start_intervals[idx]
+    d1_arr, d0_arr = data[idx], data_start_intervals[idx]
 
     inc0, inc1, inc2 = [], [], []
-    for d1, d0 in zip(d1_a, d0_a):
+    for d1, d0 in zip(d1_arr, d0_arr):
         tmp0 = d1[start_interv_sec + 3 * delta] - d0
         tmp0 = tmp0[~np.isnan(tmp0)]
         inc0 += tmp0.tolist()

@@ -78,25 +78,13 @@ class Params:
     def load_data(self, *, flat=False, ignore_opts=False):
         data_path = self.read("data.io.path")
         data = np.load(data_path)
+        data = np.ma.array(data, mask=np.isnan(data))
 
-        prop = np.array(self.read("data.prop_to_use"))
-        if data.ndim != prop.size:
-            raise ValueError(
-                    f"data.prop_to_use {repr(prop)} is not compatible with data.shape={repr(data.shape)}"
-            )
-
-        if data.ndim == 1:
-            tot_size = data.size
-            data = data[: int(tot_size * prop)]
-        elif data.ndim == 2:
-            tot_size_1, tot_size_2 = data.shape
-            prop_1, prop_2 = prop
-            data = data[: int(tot_size_1 * prop_1), : int(tot_size_2 * prop_2)]
-        else:
-            raise ValueError(f"Data can't have more than two dimensions.")
+        prop_to_use = self.read("data.prop_to_use")
+        data = trim_data(data, prop_to_use)
 
         if flat:
-            data = data.flatten()
+            data = data.compressed()
         elif data.ndim == 1:
             data = data[np.newaxis, :]
         else:
@@ -119,18 +107,51 @@ class Params:
         data = data / data_normalization
         return data
 
-    def format_output_filename(self, filename_raw):
+    def format_output_filename_for_data(self, filename_raw):
         """
-        return <config.io.save_path>/<config.io.save_filenames_prefix>_<fielaneme_raw>
+        return <config.io.processed_data_save_path>/<config.io.save_filenames_prefix>_<fielaneme_raw>
         """
-        return "".join(
-            [
-                self.read("config.io.save_path"),
-                self.read("config.io.save_filenames_prefix"),
-                "_",
-                filename_raw,
-            ]
-        )
+
+        out = "".join([
+            self.read("config.io.processed_data_save_path"),
+            self.read("config.io.save_filenames_prefix"),
+            "_",
+            filename_raw,
+        ])
+        return out
+
+    def format_output_filename_for_figures(self, filename_raw):
+        """
+        return <config.io.figures_save_path>/<config.io.save_filenames_prefix>_<fielaneme_raw>
+        """
+
+        out = "".join([
+            self.read("config.io.figures_save_path"),
+            self.read("config.io.save_filenames_prefix"),
+            "_",
+            filename_raw,
+        ])
+        return out
 
     def __repr__(self):
         return pprint.pformat(dict(self.params), sort_dicts=False)
+
+
+def trim_data(data, prop_to_use):
+    prop_to_use = np.array(prop_to_use)
+    if data.ndim != prop_to_use.size:
+        raise ValueError(
+            f"data.prop_to_use {repr(prop_to_use)} is not compatible with data.shape={repr(data.shape)}"
+        )
+
+    if data.ndim == 1:
+        tot_size = data.size
+        data = data[: int(tot_size * prop_to_use)]
+    elif data.ndim == 2:
+        tot_size_1, tot_size_2 = data.shape
+        prop_1, prop_2 = prop_to_use
+        data = data[: int(tot_size_1 * prop_1), : int(tot_size_2 * prop_2)]
+    else:
+        raise ValueError(f"Data can't have more than two dimensions.")
+
+    return data

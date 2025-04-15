@@ -1,6 +1,8 @@
+import matplotlib.pyplot as plt
 import numpy as np
 
-from ..utils.mpl_utils import mpl_setup
+from ..utils.logger_setup import logger
+from ..utils.mpl_utils import mpl_setup, save_fig
 from ..utils.parameters_utils import Params
 from .turbulence_analysis_functions import (
     compute_taylor_scale,
@@ -17,9 +19,15 @@ def exec_rutine(params_file):
 
     data = params.load_data(flat=True, ignore_opts=True)
 
-    for func in params.read("rutine.part1_turbulence_analysis"):
-        func = globals()[f"{func}_params"]
+    for func_str in params.read("rutine.part1_turbulence_analysis"):
+        logger.info("-" * 80)
+        logger.info(f"----- START {func_str} (PART 1)")
+
+        func = globals()[f"{func_str}_params"]
         func(data, params)
+
+        logger.info(f"----- END {func_str} (PART 1)")
+        logger.info("-" * 80)
 
 
 def compute_turbulence_analysis_autovalues_params(data, params):
@@ -40,18 +48,42 @@ def compute_turbulence_analysis_autovalues_params(data, params):
 
 def plot_stationary_params(data, params):
     data_split_percent = params.read("p1.plot_stationary.data_split_percent")
-    return plot_stationary(data, data_split_percent)
+    out = plot_stationary(data, data_split_percent)
+    logger.info("hola")
+
+    if params.read("config.misc.mpl.save_figures"):
+        save_fig(params.format_output_filename_for_figures("p1_stationary.pdf"))
+    if params.read("config.misc.mpl.show_figures"):
+        plt.show()
+
+    return out
 
 
 def plot_pdf_params(data, params):
     nbins = params.read("p1.plot_pdf.nbins")
-    return plot_pdf(data, nbins)
+
+    out = plot_pdf(data, nbins)
+
+    if params.read("config.misc.mpl.save_figures"):
+        save_fig(params.format_output_filename_for_figures("p1_pdf.pdf"))
+    if params.read("config.misc.mpl.show_figures"):
+        plt.show()
+
+    return out
 
 
 def plot_spectrum_params(data, params):
     fs = params.read("general.fs")
     ma_nbins = params.read("p1.plot_spectrum.moving_average_nbins")
-    return plot_spectrum(data, fs, ma_nbins)
+
+    out = plot_spectrum(data, fs, ma_nbins)
+
+    if params.read("config.misc.mpl.save_figures"):
+        save_fig(params.format_output_filename_for_figures("p1_spectrum.pdf"))
+    if params.read("config.misc.mpl.show_figures"):
+        plt.show()
+
+    return out
 
 
 def compute_taylor_scale_params(data, params):
