@@ -5,7 +5,7 @@ from ..utils.general import logspace_moving_average
 from ..utils.mpl_utils import add_horizontal_slider
 
 
-def compute_int_scale(data, fs):
+def compute_int_scale(data, fs, taylor_hyp_vel):
     if data.size > int(1e5):
         data = data[: int(2 + 1e5)]
 
@@ -103,8 +103,8 @@ def compute_int_scale(data, fs):
 
     plt.show()
 
-    data_mean, data_var = np.mean(data), np.var(data)
+    data_var = np.var(data)
     e0_val = np.nanmean(
         ene[(f > np.exp(fmin_slider.val)) & (f < np.exp(fmax_slider.val))]
     )
-    return e0_val * data_mean / (4 * data_var)
+    return e0_val * taylor_hyp_vel / (4 * data_var)
