@@ -40,7 +40,6 @@ def plot_stationary(data, data_split_percent):
     ax2.plot(x, data, lw=0.1, color="k")
 
     ax1.legend()
-    plt.show()
 
 
 def plot_pdf(data, nbins):
@@ -64,8 +63,6 @@ def plot_pdf(data, nbins):
     ax.set_yscale("log")
     ax.grid(alpha=0.2)
     ax.legend()
-
-    plt.show()
 
 
 def plot_spectrum(data, fs, ma_nbins):
@@ -101,8 +98,6 @@ def plot_spectrum(data, fs, ma_nbins):
     ax.grid()
     ax.legend()
     ax.loglog()
-
-    plt.show()
 
 
 def compute_taylor_scale(data, fs, ma_nbins):
@@ -197,8 +192,6 @@ def compute_taylor_scale(data, fs, ma_nbins):
     ax.legend(loc="lower left")
     ax.loglog()
     ax.set_xlim(f[0], f[-1])
-
-    plt.show()
 
 
 if __name__ == "__main__":

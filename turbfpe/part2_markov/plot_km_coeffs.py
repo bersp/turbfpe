@@ -58,8 +58,6 @@ def plot_km_coeffs_estimation(km_coeffs_est_group, density_funcs_group, taylor_s
         alpha=0.4,
     )
 
-    plt.show()
-
 
 def plot_km_coeffs_estimation_opti(
     km_coeffs_est_group,
@@ -163,8 +161,6 @@ def plot_km_coeffs_estimation_opti(
         taylor_scale,
         taylor_hyp_vel,
     )
-
-    plt.show()
 
 
 def _plot_pdf_estimation_opti(
@@ -314,8 +310,6 @@ def plot_km_coeffs_fit(
     D2_fit = km_coeffs.eval_D2(X, Y)
     ax2.plot_surface(X, Y, D2_fit, alpha=.8, cmap="GnBu_r")
     scatter_3d(ax2, u_incs, scales, D2, x_label, y_label, r"$D^{(2)}$")
-
-    plt.show()
 
 
 def scatter_3d(ax, x, y, z, x_label, y_label, z_label, legend=None, **kwargs):
