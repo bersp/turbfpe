@@ -1,6 +1,7 @@
 import numpy as np
 from tqdm import tqdm
 
+from ..utils.logger_setup import logger
 from ..utils.storing_clases import (
     ConditionalMoments,
     ConditionalMomentsGroup,
@@ -20,6 +21,7 @@ def compute_conditional_moments_estimation(
     highest_freq,
     markov_scale_us,
     nbins,
+    min_events,
     int_scale,
     taylor_scale,
     n_scale_steps,
@@ -94,8 +96,20 @@ def compute_conditional_moments_estimation(
             M41[:, jj] = dd * np.nansum((mean_per_bin_1I0**4) * P_1I0, axis=0)
 
             # Compute errors of the moments
-            M1_err[:, jj] = np.sqrt(np.abs((M21[:, jj] - M11[:, jj] ** 2) / counts0))
-            M2_err[:, jj] = np.sqrt(np.abs((M41[:, jj] - M21[:, jj] ** 2) / counts0))
+            counts0_for_div = counts0.copy().astype(float)
+            counts0_for_div[counts0_for_div == 0] = np.nan
+            M1_err[:, jj] = np.sqrt(
+                np.abs((M21[:, jj] - M11[:, jj] ** 2) / counts0_for_div)
+            )
+            M2_err[:, jj] = np.sqrt(
+                np.abs((M41[:, jj] - M21[:, jj] ** 2) / counts0_for_div)
+            )
+
+        if np.all(counts0 < min_events):
+            logger.warn(
+                f"Scale {scale_idx} (={scales[scale_idx]}) was ignored because none of the bins of the density function have more than {min_events} events."
+            )
+            continue
 
         cond_moments = ConditionalMoments(
             scale=scales[scale_idx],
