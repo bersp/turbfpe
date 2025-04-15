@@ -97,7 +97,6 @@ def compute_km_estimation_stp_opti(
 ):
     km_coeffs_est_group = km_coeffs_est_group.copy()
 
-    logger.info("Short time propagator optimization...")
     for scale_idx in tqdm(
         range(len(km_coeffs_est_group)),
         desc="# scales",
