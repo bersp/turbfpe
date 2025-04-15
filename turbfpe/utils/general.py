@@ -1,13 +1,15 @@
 import numpy as np
 
 
-def get_pdf(arr, bins):
+def get_pdf(arr, bins, density=True):
     y, bins = np.histogram(arr, bins=bins, density=False)
-    y = y.astype(float)
-    y = y / np.sum(y * np.diff(bins))
 
     offset = (bins[1] - bins[0]) / 2
     x = bins[:-1] + offset
+
+    if density:
+        y = y.astype(float)
+        y = y / np.sum(y * np.diff(bins))
 
     return x, y
 
