@@ -233,8 +233,8 @@ def _plot_pdf_estimation_opti(
 
     s = scale_us / markov_scale_us
     s_short = scale_short_us / markov_scale_us
-    ax.set_xlabel(rf"$u_{{s={s:.2g}\Delta_\text{{EM}}}} / \sigma_\infty$")
-    ax.set_ylabel(rf"$u_{{s={s_short:.2g}\Delta_\text{{EM}}}} / \sigma_\infty$")
+    ax.set_xlabel(rf"$u_{{s={s:.2g}\Delta_\mathrm{{EM}}}} / \sigma_\infty$")
+    ax.set_ylabel(rf"$u_{{s={s_short:.2g}\Delta_\mathrm{{EM}}}} / \sigma_\infty$")
     ax.set_xlim(-2.5, 2.5)
     ax.set_ylim(-2, 2)
 
@@ -267,9 +267,9 @@ def _plot_pdf_estimation_opti(
 
     # legend
     legend_elements = [
-        Line2D([0], [0], color="k", lw=2, ls=":", label=r"$p_\text{exp}$"),
-        Line2D([0], [0], color="gray", lw=2, label=r"$p_\text{stp}$"),
-        Line2D([0], [0], color="C0", lw=2, label=r"$p_\text{stp}^\text{opt}$"),
+        Line2D([0], [0], color="k", lw=2, ls=":", label=r"$p_\mathrm{exp}$"),
+        Line2D([0], [0], color="gray", lw=2, label=r"$p_\mathrm{stp}$"),
+        Line2D([0], [0], color="C0", lw=2, label=r"$p_\mathrm{stp}^\mathrm{opt}$"),
     ]
     ax.legend(handles=legend_elements, loc="lower right")
 

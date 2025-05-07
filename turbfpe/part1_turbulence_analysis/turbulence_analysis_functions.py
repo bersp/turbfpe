@@ -28,7 +28,7 @@ def plot_stationary(data, data_split_percent):
         out[3, i] = stats.kurtosis(chunk, fisher=False)
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
-    ax1.set_xlabel("percentage of data")
+    ax1.set_xlabel(r"$\mathrm{percentage}~\mathrm{of}~\mathrm{data}$")
 
     x = np.linspace(0, 100, n, endpoint=True)
     ax1.scatter(x, out[0], label="mean")
@@ -46,7 +46,7 @@ def plot_pdf(data, nbins):
     fig, ax = plt.subplots(figsize=(6, 6))
 
     ax.set_xlabel("$u$")
-    ax.set_ylabel(r"PDF")
+    ax.set_ylabel(r"$\mathrm{PDF}$")
 
     data_mean, data_std = np.mean(data), np.std(data)
     x, y = get_pdf(data, bins=nbins)
@@ -113,7 +113,7 @@ def plot_spectrum(
         max_ene = np.max(ene * f * ene_norm_inv)
 
     # Horizontal line on the spectrum max
-    ax2.axhline(max_ene, ls="--", lw=2, c="#2b3339", label=f"f^({comp_exponent})")
+    ax2.axhline(max_ene, ls="--", lw=2, c="#2b3339", label=f"$f^{{{comp_exponent}}}$")
 
     # Integral and taylor "freqs"
     ax1.axvline(1 / int_scale, lw=2, c="C1", label=r"$L^{-1}$")

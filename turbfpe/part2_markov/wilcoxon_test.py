@@ -132,9 +132,9 @@ def plot_wilcoxon_test(data, delta_arr_us, wt_arr, markov_scale_us):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
 
     ax1.axhline(1, c="k")
-    ax1.axvline(markov_scale_us, c="C3", ls="--", lw=2, label=r"$\Delta_\text{EM}$")
-    ax1.set_xlabel(r"$\Delta$ [samp]")
-    ax1.set_ylabel("Wilcoxon-Test")
+    ax1.axvline(markov_scale_us, c="C3", ls="--", lw=2, label=r"$\Delta_\mathrm{EM}$")
+    ax1.set_xlabel(r"$\Delta~\mathrm{[samp]}$")
+    ax1.set_ylabel(r"$\mathrm{Standardized}$" + "\n" + r"$\mathrm{Wilcoxon-Test}$")
 
     for i, wt in enumerate(wt_arr):
         ax1.loglog(delta_arr_us, wt, ".-k", alpha=0.2)
