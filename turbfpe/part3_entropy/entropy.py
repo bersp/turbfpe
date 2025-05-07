@@ -47,11 +47,6 @@ def compute_entropy_autovalues_params(_, params):
 
 
 def _compute_entropy_params(data, params, opti_type):
-    prop_to_use = params.read("p3.general.prop_to_use")
-    data = trim_data(data, prop_to_use)
-    if not np.all(np.array(prop_to_use) == 1.0):
-        logger.info(f"Trimmed data. The new shape is {data.shape}")
-    
     km_coeffs = KMCoeffs.load_npz(
         params.format_output_filename_for_data(f"km_coeffs_{opti_type}_opti.npz")
     )
@@ -64,6 +59,12 @@ def _compute_entropy_params(data, params, opti_type):
     taylor_hyp_vel = params.read("general.taylor_hyp_vel")
     overlap_trajs_flag = params.read("p3.general.overlap_trajs_flag")
     available_ram_gb = params.read("p3.general.available_ram_gb")
+
+    if overlap_trajs_flag:
+        prop_to_use = params.read("p3.general.prop_to_use")
+        data = trim_data(data, prop_to_use)
+        if not np.all(np.array(prop_to_use) == 1.0):
+            logger.info(f"Trimmed data. The new shape is {data.shape}")
 
     entropies, *_ = compute_entropy(
         data,
@@ -92,6 +93,11 @@ def compute_entropy_ift_opti_params(data, params):
 
 
 def compute_km_coeffs_ift_opti_params(data, params):
+    prop_to_use = params.read("p3.general.prop_to_use")
+    data = trim_data(data, prop_to_use)
+    if not np.all(np.array(prop_to_use) == 1.0):
+        logger.info(f"Trimmed data. The new shape is {data.shape}")
+
     km_coeffs_stp_opti = KMCoeffs.load_npz(
         params.format_output_filename_for_data(f"km_coeffs_stp_opti.npz")
     )
