@@ -103,9 +103,9 @@ def plot_wilcoxon_test_params(data, params):
 
     out = plot_wilcoxon_test(data, delta_arr, wt_arr, markov_scale_us)
 
-    if params.read("config.misc.mpl.save_figures"):
+    if params.read("config.mpl.save_figures"):
         save_fig(params.format_output_filename_for_figures("p2_wilcoxon_test.pdf"))
-    if params.read("config.misc.mpl.show_figures"):
+    if params.read("config.mpl.show_figures"):
         plt.show()
     else:
         plt.close()
@@ -193,9 +193,9 @@ def plot_km_coeffs_estimation_params(_, params):
 
     out = plot_km_coeffs_estimation(km_coeffs_est_group, density_funcs_group, taylor_scale)
 
-    if params.read("config.misc.mpl.save_figures"):
+    if params.read("config.mpl.save_figures"):
         save_fig(params.format_output_filename_for_figures("p2_km_coeffs_estimation.pdf"))
-    if params.read("config.misc.mpl.show_figures"):
+    if params.read("config.mpl.show_figures"):
         plt.show()
     else:
         plt.close()
@@ -254,9 +254,9 @@ def plot_km_coeffs_estimation_opti_params(_, params):
         taylor_hyp_vel,
     )
 
-    if params.read("config.misc.mpl.save_figures"):
+    if params.read("config.mpl.save_figures"):
         save_fig(params.format_output_filename_for_figures("p2_km_coeffs_estimation_opti.pdf"))
-    if params.read("config.misc.mpl.show_figures"):
+    if params.read("config.mpl.show_figures"):
         plt.show()
     else:
         plt.close()
@@ -312,9 +312,9 @@ def plot_km_coeffs_fit_params(_, params):
         taylor_scale,
     )
 
-    if params.read("config.misc.mpl.save_figures"):
+    if params.read("config.mpl.save_figures"):
         save_fig(params.format_output_filename_for_figures("p2_km_coeffs_fit.pdf"))
-    if params.read("config.misc.mpl.show_figures"):
+    if params.read("config.mpl.show_figures"):
         plt.show()
     else:
         plt.close()

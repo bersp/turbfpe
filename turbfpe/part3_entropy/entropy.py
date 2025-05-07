@@ -150,13 +150,13 @@ def _plot_entropy_and_ift_params(_, params, opti_type):
 
     out = plot_entropy_and_ift(entropies, nbins)
 
-    if params.read("config.misc.mpl.save_figures"):
+    if params.read("config.mpl.save_figures"):
         save_fig(
             params.format_output_filename_for_figures(
                 f"p3_entropies_{opti_type}_opti.pdf"
             )
         )
-    if params.read("config.misc.mpl.show_figures"):
+    if params.read("config.mpl.show_figures"):
         plt.show()
     else:
         plt.close()

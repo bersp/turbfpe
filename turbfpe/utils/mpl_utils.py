@@ -5,8 +5,8 @@ from matplotlib.widgets import Slider
 
 def mpl_setup(params=None):
     if params:
-        usetex_flag = params.read("config.misc.mpl.usetex")
-        constrained_layout_flag = params.read("config.misc.mpl.constrained_layout")
+        usetex_flag = params.read("config.mpl.usetex")
+        constrained_layout_flag = params.read("config.mpl.constrained_layout")
     else:
         usetex_flag = False
         constrained_layout_flag = False

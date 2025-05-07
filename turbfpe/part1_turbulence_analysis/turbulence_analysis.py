@@ -50,9 +50,9 @@ def plot_stationary_params(data, params):
     data_split_percent = params.read("p1.plot_stationary.data_split_percent")
     out = plot_stationary(data, data_split_percent)
 
-    if params.read("config.misc.mpl.save_figures"):
+    if params.read("config.mpl.save_figures"):
         save_fig(params.format_output_filename_for_figures("p1_stationary.pdf"))
-    if params.read("config.misc.mpl.show_figures"):
+    if params.read("config.mpl.show_figures"):
         plt.show()
     else:
         plt.close()
@@ -65,9 +65,9 @@ def plot_pdf_params(data, params):
 
     out = plot_pdf(data, nbins)
 
-    if params.read("config.misc.mpl.save_figures"):
+    if params.read("config.mpl.save_figures"):
         save_fig(params.format_output_filename_for_figures("p1_pdf.pdf"))
-    if params.read("config.misc.mpl.show_figures"):
+    if params.read("config.mpl.show_figures"):
         plt.show()
     else:
         plt.close()
@@ -84,9 +84,9 @@ def plot_spectrum_params(data, params):
 
     out = plot_spectrum(data, fs, int_scale, taylor_scale, comp_exponent, ma_nbins)
 
-    if params.read("config.misc.mpl.save_figures"):
+    if params.read("config.mpl.save_figures"):
         save_fig(params.format_output_filename_for_figures("p1_spectrum.pdf"))
-    if params.read("config.misc.mpl.show_figures"):
+    if params.read("config.mpl.show_figures"):
         plt.show()
     else:
         plt.close()
