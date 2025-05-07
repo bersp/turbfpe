@@ -36,6 +36,9 @@ def plot_km_coeffs_estimation(km_coeffs_est_group, density_funcs_group, taylor_s
     scatter_3d(axs[1, 0], u_incs, scales, D4, x_label, y_label, r"$D^{(4)}$", alpha=0.4)
     scatter_3d(axs[1, 1], u_incs, scales, D3, x_label, y_label, r"$D^{(3)}$", alpha=0.4)
 
+    D2[D2 == 0] = np.nan
+    D4[D4 == 0] = np.nan
+
     scatter_3d(
         axs[0, 2],
         u_incs,
@@ -289,7 +292,7 @@ def plot_km_coeffs_fit(
     )
 
     fig, (ax1, ax2) = plt.subplots(
-            1, 2, subplot_kw={"projection": "3d",  "computed_zorder": False}, figsize=(14, 6)
+            1, 2, subplot_kw={"projection": "3d"}, figsize=(14, 6)
     )
     ax1.invert_yaxis()
     ax2.invert_yaxis()

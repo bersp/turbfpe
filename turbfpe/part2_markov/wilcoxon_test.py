@@ -189,7 +189,7 @@ def _plot_pdf_on_markov_scale(ax, data, markov_scale_us, u0):
     P_2I1I0, *_, counts1I0 = distribution(
         incs2I0, incs1I0, bins=[bin_x_edges, bin_y_edges]
     )
-    P_2I1I0[:, (counts1I0 < 400 // 5)] = np.nan
+    P_2I1I0[:, (counts1I0 < 80)] = np.nan
     P_2I1I0 = np.clip(P_2I1I0, None, 5 * np.nanstd(P_2I1I0))
 
     ax.contour(X, Y, P_2I1I0, levels=levels, cmap="Reds", linewidths=2)
