@@ -65,39 +65,66 @@ def plot_pdf(data, nbins):
     ax.legend()
 
 
-def plot_spectrum(data, fs, ma_nbins):
+def plot_spectrum(
+    data, fs, int_scale, taylor_scale, comp_exponent="-5/3", ma_nbins=None
+):
     # calculate and plot energy spectrum
     esd = np.abs(np.fft.rfft(data, norm="backward")) ** 2 / (data.size * fs)
     f = fs / 2 * np.linspace(0, 1, int(data.size / 2))
     # ^ same as f = np.fft.rfftfreq(data.size, d=1/fs)[1:]
     ene = 2 * esd[1:]
 
-    fig, ax = plt.subplots(figsize=(6, 6))
-    ax.set_xlabel(r"$f~[1/T]$")
-    ax.set_ylabel("$E(f)$")
+    ene_norm_inv = f ** (-eval(comp_exponent))
 
-    # plot raw data
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+    ax1.set_xlabel(r"$f$")
+    ax2.set_xlabel(r"$f$")
+    ax1.set_ylabel("$E(f)$")
+    ax2.set_ylabel(f"$E(f)/f^{{{comp_exponent}}}$")
+
+    # Raw spectrum
     subsamp = np.logspace(0, np.log10(f.size), int(1e5)).astype(int)[:-1]
-    ax.plot(f[subsamp], ene[subsamp], c="C7", lw=1, label="Raw data", alpha=1)
-
-    # plot -5/3
-    x = np.array([f[1], f[-1] * 10])
-    eneval = ene.copy()
-    eneval[f > 1] = np.nan
-    xmax = f[np.argmax(eneval)]
-    ax.add_artist(
-        lines.Line2D(x, (x / xmax) ** (-5 / 3) * np.max(ene), c="k", lw=2, ls="--")
+    ax1.plot(
+        f[subsamp],
+        ene[subsamp],
+        c="C7",
+        lw=1,
+        label="Raw data",
+        alpha=1,
+    )
+    ax2.plot(
+        f[subsamp],
+        ene[subsamp] * ene_norm_inv[subsamp],
+        c="C7",
+        lw=1,
+        alpha=1,
     )
 
-    # calculate and plot moving average energy spectrum
+    # Smoothed (moving-average) spectrum
     if ma_nbins is not None:
         f_ma = logspace_moving_average(f, nbins=ma_nbins)
         ene_ma = logspace_moving_average(ene, nbins=ma_nbins)
-        ax.plot(f_ma, ene_ma, "k", label="Averaged data")
+        ene_norm_inv_ma = f_ma ** (-eval(comp_exponent))
+        ax1.plot(f_ma, ene_ma, c="k", label="Averaged data", zorder=100)
+        ax2.plot(f_ma, ene_ma * ene_norm_inv_ma, c="k", zorder=100)
 
-    ax.grid()
-    ax.legend()
-    ax.loglog()
+        max_ene = np.max(ene_ma * ene_norm_inv_ma)
+    else:
+        max_ene = np.max(ene * f * ene_norm_inv)
+
+    # Horizontal line on the spectrum max
+    ax2.axhline(max_ene, ls="--", lw=2, c="#2b3339", label=f"f^({comp_exponent})")
+
+    # Integral and taylor "freqs"
+    ax1.axvline(1 / int_scale, lw=2, c="C1", label=r"$L^{-1}$")
+    ax1.axvline(1 / taylor_scale, lw=2, c="C0", label=r"$\lambda^{-1}$")
+    ax2.axvline(1 / int_scale, lw=2, c="C1")
+    ax2.axvline(1 / taylor_scale, lw=2, c="C0")
+
+    for ax in (ax1, ax2):
+        ax.grid()
+        ax.legend()
+        ax.loglog()
 
 
 def compute_taylor_scale(data, fs, ma_nbins):

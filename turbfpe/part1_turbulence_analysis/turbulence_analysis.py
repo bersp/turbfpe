@@ -73,9 +73,12 @@ def plot_pdf_params(data, params):
 
 def plot_spectrum_params(data, params):
     fs = params.read("general.fs")
+    comp_exponent = params.read("p1.plot_spectrum.comp_exponent")
+    int_scale = params.read("general.int_scale")
+    taylor_scale = params.read("general.taylor_scale")
     ma_nbins = params.read("p1.plot_spectrum.moving_average_nbins")
 
-    out = plot_spectrum(data, fs, ma_nbins)
+    out = plot_spectrum(data, fs, int_scale, taylor_scale, comp_exponent, ma_nbins)
 
     if params.read("config.misc.mpl.save_figures"):
         save_fig(params.format_output_filename_for_figures("p1_spectrum.pdf"))
