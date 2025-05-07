@@ -78,6 +78,7 @@ class Params:
     def load_data(self, *, flat=False, ignore_opts=False):
         data_path = self.read("data.io.path")
         data = np.load(data_path)
+
         data = np.ma.array(data, mask=np.isnan(data))
 
         prop_to_use = self.read("data.prop_to_use")
@@ -105,6 +106,7 @@ class Params:
             data_normalization = 1
 
         data = data / data_normalization
+
         return data
 
     def format_output_filename_for_data(self, filename_raw):
@@ -152,6 +154,6 @@ def trim_data(data, prop_to_use):
         prop_1, prop_2 = prop_to_use
         data = data[: int(tot_size_1 * prop_1), : int(tot_size_2 * prop_2)]
     else:
-        raise ValueError(f"Data can't have more than two dimensions.")
+        raise ValueError("Data can't have more than two dimensions.")
 
     return data

@@ -49,7 +49,6 @@ def compute_turbulence_analysis_autovalues_params(data, params):
 def plot_stationary_params(data, params):
     data_split_percent = params.read("p1.plot_stationary.data_split_percent")
     out = plot_stationary(data, data_split_percent)
-    logger.info("hola")
 
     if params.read("config.misc.mpl.save_figures"):
         save_fig(params.format_output_filename_for_figures("p1_stationary.pdf"))

@@ -761,13 +761,11 @@ def plot_entropy_and_ift(entropies, nbins):
     hist_max = np.nanmax([medium_entropy, system_entropy, total_entropy])
     bins = np.linspace(hist_min, hist_max, nbins)
 
-    logger.info('hi')
     total_entropy, idxs = _filter_data_using_min_events(
         total_entropy, bins, min_events=2
     )
     medium_entropy = medium_entropy[idxs]
     system_entropy = system_entropy[idxs]
-    logger.info('hi')
 
     hist_min = np.nanmin([medium_entropy, system_entropy, total_entropy])
     hist_max = np.nanmax([medium_entropy, system_entropy, total_entropy])
@@ -841,19 +839,27 @@ def plot_entropy_and_ift(entropies, nbins):
     bins = np.linspace(-bound, bound, 151, endpoint=True)
     centers_tot, pdf_tot = get_pdf(total_entropy, bins=bins)
     ent_abs_l, dft_l = [], []
+
     centers_positive = centers_tot[centers_tot.size // 2 :]
     pdf_positive = pdf_tot[centers_tot.size // 2 :]
-    centers_negative = centers_tot[: centers_tot.size // 2]
+
+    # centers_negative = centers_tot[: centers_tot.size // 2]
     pdf_negative = pdf_tot[: centers_tot.size // 2]
+
+    pdf_positive[pdf_positive == 0] = np.nan
+    pdf_negative[pdf_negative == 0] = np.nan
 
     for i in range(len(centers_positive)):
         ent_abs_l.append(centers_positive[i])
-        # print(centers_positive[i], centers_negative[-i-1])
         dft = np.log(pdf_positive[i] / pdf_negative[-i - 1])
         dft_l.append(dft)
 
-    ax3.plot(ent_abs_l, ent_abs_l, "--k")
-    ax3.plot(ent_abs_l, dft_l, "o", mfc='none')
+    ax3.plot(ent_abs_l, ent_abs_l, "--k", label="DFT")
+    ax3.plot(ent_abs_l, dft_l, "o", mfc="none")
+
+    ax3.set_xlabel(r"$|\Delta S_{\mathrm{tot}}|$")
+    ax3.set_ylabel(r"$\ln(p(\Delta S_{\mathrm{tot}}) / p(-\Delta S_{\mathrm{tot}}))$")
+    ax3.legend()
 
 
 def _filter_data_using_min_events(data, bins, min_events):
