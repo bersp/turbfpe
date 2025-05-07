@@ -99,7 +99,7 @@ def fit_D2(
     )
 
     # Overwrite errors as ones if needed
-    z_err_data = np.ones_like(z_err_data)
+    # z_err_data = np.ones_like(z_err_data)
 
     popt, pcov = curve_fit(
         _model,
