@@ -57,12 +57,8 @@ shape = "!auto"
 [general]
 fs = 8000.0  # float.
 highest_freq = 1800.0 # float or auto (not implemented yet)
-nu = 15.32e-6  # float. def: kinematic vistosity.
 int_scale = 0.0672 # 0.035482826276860564  # float or auto (from preanalysis).
 taylor_scale = 0.0066  # float or auto (not implemented yet).
-kolmogorov_length = "!auto"  # float or auto (from preanalysis).
-kolmogorov_time = "!auto"  # float or auto (from preanalysis).
-epsilon = "!auto"  # float or auto (from preanalysis). def: mean disipation rate..
 taylor_hyp_vel = 2.25  # float or auto (not implemented yet). def: velocity to transform space to time.
 nbins = "!auto"  # int or auto (from preanalysis).
 
