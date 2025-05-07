@@ -544,72 +544,6 @@ def compute_km_coeffs_ift_opti(
     return km_coeffs_ift_opti, optimization_history
 
 
-def ift_run_optimization(
-    x0,
-    lower_bound,
-    upper_bound,
-    iter_max,
-    scales_dimless,
-    n_scales,
-    km_coeffs,
-    largest_scale,
-    smallest_scale,
-    data,
-    fs,
-    scale_subsample_step_us,
-    taylor_scale,
-    taylor_hyp_vel,
-    overlap_trajs_flag,
-    available_ram_gb,
-):
-    bounds = [(_l, _u) for _l, _u in zip(lower_bound, upper_bound)]
-    optimization_history = {"x_iter": [], "error": [], "ift": []}
-
-    def objective(x):
-        error, ift = ift_objective_function(
-            x,
-            scales_dimless,
-            n_scales,
-            km_coeffs,
-            largest_scale,
-            smallest_scale,
-            data,
-            fs,
-            scale_subsample_step_us,
-            taylor_scale,
-            taylor_hyp_vel,
-            overlap_trajs_flag,
-            available_ram_gb,
-        )
-        optimization_history["x_iter"].append(np.copy(x))
-        optimization_history["error"].append(error)
-        optimization_history["ift"].append(ift)
-        return error
-
-    def callback(_):
-        iter_n = len(optimization_history["error"])
-        ift = optimization_history["ift"][-1]
-        error = optimization_history["error"][-1]
-        logger.info(
-            "\n"
-            + "-" * 40
-            + f"\n# Evaluations: {iter_n}\nIFT: {ift}\nError: {error}\n"
-            + "-" * 40
-            + "\n"
-        )
-
-    res = minimize(
-        objective,
-        x0,
-        method="L-BFGS-B",
-        bounds=bounds,
-        options={"maxiter": iter_max, "gtol": 1e-8},
-        callback=callback,
-    )
-    optimization_history["n_iter"] = np.arange(len(optimization_history["error"]))
-    return res, optimization_history
-
-
 def ift_objective_function(
     x0,
     scales_dimless,
@@ -685,13 +619,78 @@ def ift_objective_function(
     error_60 = compute_error(0.6)
     error_70 = compute_error(0.7)
     error_80 = compute_error(0.8)
-    n90 = int(np.ceil(0.9 * size))
-    error_90 = np.abs(1 - get_mean(n90)) if n90 > 0 else 0.0
+    error_90 = compute_error(0.9)
     error_100 = np.abs(1 - ift)
 
     error = error_60 + error_70 + error_80 + error_90 + error_100
 
     return error, ift
+
+
+def ift_run_optimization(
+    x0,
+    lower_bound,
+    upper_bound,
+    iter_max,
+    scales_dimless,
+    n_scales,
+    km_coeffs,
+    largest_scale,
+    smallest_scale,
+    data,
+    fs,
+    scale_subsample_step_us,
+    taylor_scale,
+    taylor_hyp_vel,
+    overlap_trajs_flag,
+    available_ram_gb,
+):
+    bounds = [(_l, _u) for _l, _u in zip(lower_bound, upper_bound)]
+    optimization_history = {"x_iter": [], "error": [], "ift": []}
+
+    def objective(x):
+        error, ift = ift_objective_function(
+            x,
+            scales_dimless,
+            n_scales,
+            km_coeffs,
+            largest_scale,
+            smallest_scale,
+            data,
+            fs,
+            scale_subsample_step_us,
+            taylor_scale,
+            taylor_hyp_vel,
+            overlap_trajs_flag,
+            available_ram_gb,
+        )
+        optimization_history["x_iter"].append(np.copy(x))
+        optimization_history["error"].append(error)
+        optimization_history["ift"].append(ift)
+        return error
+
+    def callback(_):
+        iter_n = len(optimization_history["error"])
+        ift = optimization_history["ift"][-1]
+        error = optimization_history["error"][-1]
+        logger.info(
+            "\n"
+            + "-" * 40
+            + f"\n# Evaluations: {iter_n}\nIFT: {ift}\nError: {error}\n"
+            + "-" * 40
+            + "\n"
+        )
+
+    res = minimize(
+        objective,
+        x0,
+        method="L-BFGS-B",
+        bounds=bounds,
+        options={"maxiter": iter_max, "gtol": 1e-8},
+        callback=callback,
+    )
+    optimization_history["n_iter"] = np.arange(len(optimization_history["error"]))
+    return res, optimization_history
 
 
 def fit_d1j(scales_dimless, y, km_coeffs):
@@ -700,7 +699,7 @@ def fit_d1j(scales_dimless, y, km_coeffs):
     upper_bounds = [2, 2, 0]
     bounds = (lower_bounds, upper_bounds)
     popt_d11, _ = curve_fit(
-        model_d11, scales_dimless, y, p0=p0, bounds=bounds, maxfev=1000
+        model_d11, scales_dimless, y, p0=p0, bounds=bounds, maxfev=10_000
     )
     return popt_d11
 
@@ -712,17 +711,17 @@ def fit_d2j(scales_dimless, y, n_scales, km_coeffs):
     p0_d20 = [km_coeffs.a20, km_coeffs.c20, km_coeffs.b20]
     bounds_d20 = ([-1, -1, 0], [1, 1, np.inf])
     popt_d20, _ = curve_fit(
-        model_d20, scales_dimless, y_d20, p0=p0_d20, bounds=bounds_d20, maxfev=1000
+        model_d20, scales_dimless, y_d20, p0=p0_d20, bounds=bounds_d20, maxfev=10_000
     )
     p0_d21 = [km_coeffs.a21, km_coeffs.c21, km_coeffs.b21]
     bounds_d21 = ([-1, -1, -np.inf], [1, 1, np.inf])
     popt_d21, _ = curve_fit(
-        model_d21, scales_dimless, y_d21, p0=p0_d21, bounds=bounds_d21, maxfev=1000
+        model_d21, scales_dimless, y_d21, p0=p0_d21, bounds=bounds_d21, maxfev=10_000
     )
     p0_d22 = [km_coeffs.a22, km_coeffs.c22, km_coeffs.b22]
     bounds_d22 = ([-1, -1, -np.inf], [1, 1, 0])
     popt_d22, _ = curve_fit(
-        model_d22, scales_dimless, y_d22, p0=p0_d22, bounds=bounds_d22, maxfev=1000
+        model_d22, scales_dimless, y_d22, p0=p0_d22, bounds=bounds_d22, maxfev=10_000
     )
     return popt_d20, popt_d21, popt_d22
 
@@ -824,6 +823,7 @@ def plot_entropy_and_ift(entropies, nbins):
     ax2.axhline(1.0, color="k", linestyle="--", linewidth=1.0, label="ift = 1")
     ax2.set_xscale("log")
     ax2.grid(True, alpha=0.4)
+
     ax2.set_xlabel(r"$N$")
     ax2.set_ylabel(r"$\langle e^{-\Delta S_{\mathrm{tot}}}\rangle_N$")
     mean_val = np.nanmean(np.exp(-total_entropy))
