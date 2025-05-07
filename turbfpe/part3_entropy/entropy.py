@@ -9,6 +9,7 @@ from ..utils.parameters_utils import Params, trim_data
 from ..utils.storing_clases import Entropies, KMCoeffs, KMCoeffsEstimationGroup
 from .entropy_computation import (
     compute_entropy,
+    _compute_entropy,
     compute_km_coeffs_ift_opti,
     plot_entropy_and_ift,
 )
@@ -105,9 +106,9 @@ def compute_km_coeffs_ift_opti_params(data, params):
     km_coeffs_est_group = KMCoeffsEstimationGroup.load_npz(
         params.format_output_filename_for_data(f"km_coeffs_estimation.npz")
     )
-    scales_for_optimization = np.array(
-        [km_coeffs_est.scale for km_coeffs_est in km_coeffs_est_group]
-    )
+    scales_for_optimization = np.array([
+        km_coeffs_est.scale for km_coeffs_est in km_coeffs_est_group
+    ])
 
     tol_D1 = params.read("p3.compute_km_coeffs_ift_opti.tol_D1")
     tol_D2 = params.read("p3.compute_km_coeffs_ift_opti.tol_D2")
@@ -157,6 +158,8 @@ def _plot_entropy_and_ift_params(_, params, opti_type):
         )
     if params.read("config.misc.mpl.show_figures"):
         plt.show()
+    else:
+        plt.close()
 
     return out
 

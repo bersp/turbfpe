@@ -54,6 +54,8 @@ def plot_stationary_params(data, params):
         save_fig(params.format_output_filename_for_figures("p1_stationary.pdf"))
     if params.read("config.misc.mpl.show_figures"):
         plt.show()
+    else:
+        plt.close()
 
     return out
 
@@ -67,6 +69,8 @@ def plot_pdf_params(data, params):
         save_fig(params.format_output_filename_for_figures("p1_pdf.pdf"))
     if params.read("config.misc.mpl.show_figures"):
         plt.show()
+    else:
+        plt.close()
 
     return out
 
@@ -84,6 +88,8 @@ def plot_spectrum_params(data, params):
         save_fig(params.format_output_filename_for_figures("p1_spectrum.pdf"))
     if params.read("config.misc.mpl.show_figures"):
         plt.show()
+    else:
+        plt.close()
 
     return out
 

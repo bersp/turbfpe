@@ -107,6 +107,8 @@ def plot_wilcoxon_test_params(data, params):
         save_fig(params.format_output_filename_for_figures("p2_wilcoxon_test.pdf"))
     if params.read("config.misc.mpl.show_figures"):
         plt.show()
+    else:
+        plt.close()
 
     return out
 
@@ -195,6 +197,8 @@ def plot_km_coeffs_estimation_params(_, params):
         save_fig(params.format_output_filename_for_figures("p2_km_coeffs_estimation.pdf"))
     if params.read("config.misc.mpl.show_figures"):
         plt.show()
+    else:
+        plt.close()
 
     return out
 
@@ -254,6 +258,8 @@ def plot_km_coeffs_estimation_opti_params(_, params):
         save_fig(params.format_output_filename_for_figures("p2_km_coeffs_estimation_opti.pdf"))
     if params.read("config.misc.mpl.show_figures"):
         plt.show()
+    else:
+        plt.close()
 
     return out
 
@@ -310,5 +316,7 @@ def plot_km_coeffs_fit_params(_, params):
         save_fig(params.format_output_filename_for_figures("p2_km_coeffs_fit.pdf"))
     if params.read("config.misc.mpl.show_figures"):
         plt.show()
+    else:
+        plt.close()
 
     return out
