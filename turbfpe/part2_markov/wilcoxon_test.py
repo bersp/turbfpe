@@ -137,11 +137,11 @@ def plot_wilcoxon_test(data, delta_arr_us, wt_arr, markov_scale_us):
     ax1.set_ylabel(r"$\mathrm{Standardized}$" + "\n" + r"$\mathrm{Wilcoxon-Test}$")
 
     for i, wt in enumerate(wt_arr):
-        ax1.loglog(delta_arr_us, wt, ".-k", alpha=0.2)
+        ax1.loglog(delta_arr_us, wt, ".k", alpha=0.2)
 
 
     wt_arr_mean = np.nanmean(wt_arr, axis=0)
-    ax1.loglog(delta_arr_us, wt_arr_mean, ".-", color="#C95E61", lw=2)
+    ax1.loglog(delta_arr_us, wt_arr_mean, "o", color="#C95E61", lw=2, ms=5)
 
     ax1.legend()
 
