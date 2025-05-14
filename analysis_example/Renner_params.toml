@@ -1,184 +1,177 @@
-[rutine]
+[routine]
 part0_preanalysis = [
-	"compute_and_write_data_stats",
-	"compute_and_write_general_autovalues"
+  "compute_and_write_data_stats",
+  "compute_and_write_general_autovalues",
 ]
 
 part1_turbulence_analysis = [
-	"compute_turbulence_analysis_autovalues",
-	"plot_stationary",
-	"plot_pdf",
-	"plot_spectrum"
+  "compute_turbulence_analysis_autovalues",
+  "plot_stationary",
+  "plot_pdf",
+  "plot_spectrum",
 ]
 
 part2_markov = [
-	"compute_markov_autovalues",
-	"compute_wilcoxon_test",
-	"plot_wilcoxon_test",
-	"compute_conditional_moments_estimation",
-	"compute_km_coeffs_estimation",
-	"plot_km_coeffs_estimation",
-	"compute_km_coeffs_estimation_stp_opti",
-	"plot_km_coeffs_estimation_opti",
-	"compute_km_coeffs_fit",
-	"plot_km_coeffs_fit",
+  "compute_markov_autovalues",
+  "compute_wilcoxon_test",
+  "plot_wilcoxon_test",
+  "compute_conditional_moments_estimation",
+  "compute_km_coeffs_estimation",
+  "plot_km_coeffs_estimation",
+  "compute_km_coeffs_estimation_stp_opti",
+  "plot_km_coeffs_estimation_opti",
+  "compute_km_coeffs_fit",
+  "plot_km_coeffs_fit",
 ]
 
 part3_entropy = [
-	"compute_entropy_autovalues",
+  "compute_entropy_autovalues",
 
-	"compute_entropy_stp_opti",
-	"plot_entropy_and_ift_for_stp_opti",
+  "compute_entropy_stp_opti",
+  "plot_entropy_and_ift_for_stp_opti",
 
-	"compute_km_coeffs_ift_opti",
-	"compute_entropy_ift_opti",
-	"plot_entropy_and_ift_for_ift_opti",
+  "compute_km_coeffs_ift_opti",
+  "compute_entropy_ift_opti",
+  "plot_entropy_and_ift_for_ift_opti",
 ]
 
-[config.io]
-processed_data_save_path = "processed_data/"
-figures_save_path = "figures/"
-save_filenames_prefix = "Renner"
-
-
-[config.misc]
-mpl.usetex = false
-mpl.constrained_layout = true
-mpl.show_figures = true
-mpl.save_figures = true
-
 [data]
-io.path = "./Renner_8000Hz_filter.npy"  # str.
-prop_to_use = 1.0  # float (from 0.0 to 1.0) or [float, float] if ndim=2
-opts.norm_data = true  # bool. Normalice data with sigma_inf.
-opts.flip_data = true  # bool or auto (not implemented yet).
-shape = "!auto"
+io.path             = "./Renner_8000Hz_filter.npy"  # str.
+prop_to_use         = 1.0                           # float (0.0 to 1.0) or [float, float].
+opts.norm_data      = true                          # bool.
+opts.flip_data      = true                          # bool.
+shape               = "!auto"                       # str.
+
+[config.io]
+processed_data_save_path = "processed_data/"  # str.
+figures_save_path        = "figures/"         # str.
+save_filenames_prefix    = "Renner"                     # str.
+
+[config.mpl]
+usetex             = true   # bool.
+constrained_layout = true   # bool.
+show_figures       = false  # bool.
+save_figures       = true   # bool.
+
+[data.stats]  # read-only
+mean     = "!auto"
+rms      = "!auto"
+std      = "!auto"
+skew     = "!auto"
+kurtosis = "!auto"
+range    = "!auto"
 
 [general]
-fs = 8000.0  # float.
-highest_freq = 1800.0 # float or auto (not implemented yet)
-int_scale = 0.0672 # 0.035482826276860564  # float or auto (from preanalysis).
-taylor_scale = 0.0066  # float or auto (not implemented yet).
-taylor_hyp_vel = 2.25  # float or auto (not implemented yet). def: velocity to transform space to time.
-nbins = "!auto"  # int or auto (from preanalysis).
+fs             = 8000.0   # float.
+highest_freq   = 1800.0   # float or auto.
+int_scale      = 0.0672   # float or auto.
+taylor_scale   = 0.0066   # float.
+taylor_hyp_vel = 2.25     # float.
+nbins          = "!auto"  # int or auto.
 
-[data.stats]
-mean = "!auto"
-rms = "!auto"
-std = "!auto"
-skew = "!auto"
-kurtosis = "!auto"
-range = "!auto"
-
-
-# ---- PART 1: Turbulence analysis ---- # 
+# – PART 1: Turbulence analysis
 [p1.plot_stationary]
-	# need => data and
-	data_split_percent = 5  # float from 0 to 100.
+  # uses -> data and
+  data_split_percent = 5  # float (0 to 100).
 
 [p1.plot_pdf]
-	# need => data and
-	nbins = "!auto"  # int or auto (=general.nbins).
+  # uses -> data and
+  nbins = "!auto"  # int or auto.
 
 [p1.plot_spectrum]
-	# need => data, general.fs and
-	moving_average_nbins = 3000  # int, auto (=10*general.nbins) or null.
+  # uses -> data, general.fs, general.int_scale, general.taylor_scale and
+  comp_exponent        = "-5/3"  # str (castable to float).
+  moving_average_nbins = 3000    # int, auto or null.
 
-
-# --- PART 2: Markov ---- #
+# – PART 2: Markov
 [p2.general]
-	markov_scale_us = "!auto" # int or auto (=general.taylor_scale*general.fs/general.taylor_hyp_vel)
-	nbins = "!auto"  # int or auto (same as general.nbins).
-	min_events = 400  # int
+  markov_scale_us = "!auto"  # int or auto.
+  nbins           = 150      # int or auto.
+  min_events      = 400      # int.
 
 [p2.compute_wilcoxon_test]
-	# need => data, general.fs, general.taylor_hyp_vel and
-	nbins = "!auto"  # int or auto (same as p2.general.nbins).
-	indep_scale = "!auto"  # float or auto (need general.int_scale).
-	end_scale = "!auto"  # float or auto (=p2.compute_wilcoxon_test.indep_scale).
-	n_interv_sec = 5  # int. Larger is slower but reduces result noise.
+  # uses -> data, general.fs, general.taylor_hyp_vel and
+  nbins        = 150      # int or auto.
+  indep_scale  = "!auto"  # float or auto.
+  end_scale    = "!auto"  # float or auto.
+  n_interv_sec = 1        # int.
 
-	# writes wilcoxon_test.npy
+  # writes -> wilcoxon_test.npy.
 
 [p2.plot_wilcoxon_test]
-	# need => wilcoxon_test.npy, p2.general.markov_scale_us
+  # uses -> wilcoxon_test.npy, p2.general.markov_scale_us.
 
 [p2.compute_conditional_moments_estimation]
-	# need => p2.general.markov_scale_us, p2.general.nbins, p2.general.min_events and
-	#  		  general.fs, general.highest_freq, general.taylor_scale, general.taylor_hyp_vel and
-	n_scale_steps = 9  # int
+  # uses -> p2.general.markov_scale_us, p2.general.nbins, p2.general.min_events,
+  #         general.fs, general.highest_freq, general.taylor_scale, general.taylor_hyp_vel and
+  n_scale_steps = 9  # int.
 
-	# writes => conditional_moments_estimation.npz, density_functions.npz
+  # writes -> conditional_moments_estimation.npz, density_functions.npz.
 
 [p2.compute_km_coeffs_estimation]
-	# need => conditional_moments_estimation.npz, density_functions.npz and
-	# 		  p2.general.markov_scale_us, p2.general.nbins, p2.general.min_events and
-	#         general.fs, general.taylor_scale, general.taylor_hyp_vel and 
+  # uses -> conditional_moments_estimation.npz, density_functions.npz,
+  #         p2.general.markov_scale_us, p2.general.nbins, p2.general.min_events,
+  #         general.fs, general.taylor_scale, general.taylor_hyp_vel.
 
-	# writes => km_coeffs_estimation.npz (except D1_opti and D2_opti)
-
+  # writes -> km_coeffs_estimation.npz (except D1_opti and D2_opti).
 
 [p2.plot_km_coeffs_estimation]
-	# need => density_functions.npz, km_coeffs_estimation.npz and
-	#         general.taylor_scale
-	
-[p2.compute_km_coeffs_estimation_stp_opti]
-	# need => km_coeffs_estimation.npz and
-	# 	      p2.general.nbins and
-	#  		  general.fs, general.taylor_scale, general.taylor_hyp_vel and
-	tol = 0.1  # float (from 0.0 to 1.0)
+  # uses -> density_functions.npz, km_coeffs_estimation.npz,
+  #         general.taylor_scale.
 
-	# writes => km_coeffs_estimation.npz (only D1_opti and D2_opti)
+[p2.compute_km_coeffs_estimation_stp_opti]
+  # uses -> km_coeffs_estimation.npz, p2.general.nbins,
+  #         general.fs, general.taylor_scale, general.taylor_hyp_vel and
+  tol = 0.1                     # float (0.0 to 1.0).
+
+  # writes -> km_coeffs_estimation.npz (only D1_opti and D2_opti).
 
 [p2.plot_km_coeffs_estimation_opti]
-	# need => km_coeffs_estimation.npz, density_functions.npz and
-	#         p2.markov_scale_us and p2.general.nbins,
-	# 		  general.taylor_scale, general.taylor_hyp_vel
+  # uses -> km_coeffs_estimation.npz, density_functions.npz and
+  #         p2.general.markov_scale_us, p2.general.nbins,
+  #         general.taylor_scale, general.taylor_hyp_vel.
 
 [p2.compute_km_coeffs_fit]
-	# need => km_coeffs_estimation.npz, density_functions.npz and
-	#         p2.general.nbins and general.taylor_scale
-	
-	# writes => km_coeffs_stp_opti.npz and km_coeffs_no_opti.npz
+  # uses -> km_coeffs_estimation.npz, density_functions.npz and
+  #         p2.general.nbins, general.taylor_scale.
+
+  # writes -> km_coeffs_stp_opti.npz, km_coeffs_no_opti.npz.
 
 [p2.plot_km_coeffs_fit]
-	# need => km_coeffs_estimation.npz, density_functions.npz, km_coeffs.npz and
-	#		  p2.general.nbins, general.taylor_scale
+  # uses -> km_coeffs_estimation.npz, density_functions.npz, km_coeffs_stp_opti.npz,
+  #         p2.general.nbins, general.taylor_scale.
 
-
-# --- PART 3: Entropy ---- #
+# – PART 3: Entropy
 [p3.general]
-	prop_to_use = [1.0, 1.0] # relative to data.prop_to_use, use it to optimize ram and cpu
-
-	smallest_scale = "!auto"  # float or auto (=general.taylor_scale)
-	largest_scale = "!auto"  # float or auto (=general.int_scale)
-	scale_subsample_step_us = "!auto"  # int or auto (=p2.general.markov_scale_us)
-	overlap_trajs_flag = false  # whatever you want to use the overlapping rutine or not
-	available_ram_gb = 4.0  # float (for most use cases this is only important if you use overlap_trajs_flag=true)
-
-[p3.compute_entropy]
-	# need => km_coeffs_(stp|ift)_opti.npz and
-	#         p3.general.smallest_scale, p3.general.largest_scale,
-	#         p3.general.scale_subsample_step_us, p3.general.overlap_trajs_flag,
-	#         p3.available_ram_gb and
-	#         general.fs, general.taylor_scale, general.taylor_hyp_vel and
-
-	# writes => entropies_(stp|ift)_opti.npy
-
-[p3.plot_entropy_and_ift_for_ift_opti]
-	# need => entropies.npy and
-	nbins = 300  # int
+  prop_to_use             = 1.0      # float (0.0 to 1.0) or [float, float].
+  smallest_scale          = "!auto"  # float or auto.
+  largest_scale           = "!auto"  # float or auto.
+  scale_subsample_step_us = "!auto"  # int or auto.
+  overlap_trajs_flag      = true     # bool.
+  available_ram_gb        = 4.0      # float.
 
 [p3.compute_km_coeffs_ift_opti]
-	# need => km_coeffs_stp_opti.npz, km_coeffs_estimation.npz (only to get the scales to use) and
-	#         p3.general.smallest_scale, p3.general.largest_scale,
-	#         p3.general.scale_subsample_step_us, p3.general.avalaiable_ram_gb
-	#         general.fs, general.taylor_scale, general.taylor_hyp_vel and
-	tol_D1 = 0.1
-	tol_D2 = 0.1
-	iter_max = 5
+  # uses -> km_coeffs_stp_opti.npz, km_coeffs_estimation.npz (only to get the scales),
+  #         p3.general.smallest_scale, p3.general.largest_scale,
+  #         p3.general.scale_subsample_step_us, p3.general.available_ram_gb,
+  #         general.fs, general.taylor_scale, general.taylor_hyp_vel and
+  tol_D1    = 0.1  # float.
+  tol_D2    = 0.1  # float.
+  iter_max  = 5    # int.
+
+[p3.compute_entropy]
+  # uses -> km_coeffs_(stp|ift)_opti.npz and
+  #         p3.general.smallest_scale, p3.general.largest_scale,
+  #         p3.general.scale_subsample_step_us, p3.general.overlap_trajs_flag,
+  #         p3.available_ram_gb and
+  #         general.fs, general.taylor_scale, general.taylor_hyp_vel.
+
+  # writes -> entropies_(stp|ift)_opti.npy.
 
 [p3.plot_entropy_and_ift_for_stp_opti]
-	# need => entropies.npy and
-	nbins = 300  # int
+  # uses -> entropies_stp_opti.npy and
+  nbins = 300  # int.
 
+[p3.plot_entropy_and_ift_for_ift_opti]
+  # uses -> entropies_ift_opti.npy and
+  nbins = 300  # int.
