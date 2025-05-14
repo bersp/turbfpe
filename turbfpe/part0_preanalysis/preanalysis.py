@@ -6,13 +6,13 @@ from ..utils.parameters_utils import Params
 from .preanalysis_functions import compute_int_scale
 
 
-def exec_rutine(params_file):
+def exec_routine(params_file):
     params = Params(params_file)
     data = params.load_data(flat=False, ignore_opts=True)
     params.write("data.shape", data.shape)
     data = data.compressed()
 
-    for func_str in params.read("rutine.part0_preanalysis"):
+    for func_str in params.read("routine.part0_preanalysis"):
         logger.info("-" * 80)
         logger.info(f"----- START {func_str} (PART 0)")
 

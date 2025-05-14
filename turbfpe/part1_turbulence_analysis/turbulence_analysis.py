@@ -12,14 +12,14 @@ from .turbulence_analysis_functions import (
 )
 
 
-def exec_rutine(params_file):
+def exec_routine(params_file):
     params = Params(params_file)
 
     mpl_setup(params)
 
     data = params.load_data(flat=True, ignore_opts=True)
 
-    for func_str in params.read("rutine.part1_turbulence_analysis"):
+    for func_str in params.read("routine.part1_turbulence_analysis"):
         logger.info("-" * 80)
         logger.info(f"----- START {func_str} (PART 1)")
 

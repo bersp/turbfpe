@@ -24,14 +24,14 @@ from .plot_km_coeffs import (
 from .wilcoxon_test import compute_wilcoxon_test, plot_wilcoxon_test
 
 
-def exec_rutine(params_file):
+def exec_routine(params_file):
     params = Params(params_file)
 
     mpl_setup(params)
 
     data = params.load_data()
 
-    for func_str in params.read("rutine.part2_markov"):
+    for func_str in params.read("routine.part2_markov"):
         logger.info("-" * 80)
         logger.info(f"----- START {func_str} (PART 2)")
 

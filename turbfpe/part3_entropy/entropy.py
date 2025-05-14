@@ -9,20 +9,19 @@ from ..utils.parameters_utils import Params, trim_data
 from ..utils.storing_clases import Entropies, KMCoeffs, KMCoeffsEstimationGroup
 from .entropy_computation import (
     compute_entropy,
-    _compute_entropy,
     compute_km_coeffs_ift_opti,
     plot_entropy_and_ift,
 )
 
 
-def exec_rutine(params_file):
+def exec_routine(params_file):
     params = Params(params_file)
 
     mpl_setup(params)
 
     data = params.load_data()
 
-    for func_str in params.read("rutine.part3_entropy"):
+    for func_str in params.read("routine.part3_entropy"):
         logger.info("-" * 80)
         logger.info(f"----- START {func_str} (PART 3)")
 
