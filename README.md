@@ -48,7 +48,7 @@ By design, **the rutine section organizes the workflow** into four ordered block
   The array may be 1-D (a single series) or 2-D, where each row is an independent realisation and each column is a sample along the primary axis (time, space, etc.).
 - `data.prop_to_use` — either a float [0 – 1] (for 1-D data) or a two-floats list `[[0 – 1], [0 – 1]]` (for 2-D data). Specifies the fraction(s) of the data wanted to load. Useful to do small tests.
 
-- `data.opts.norm_data` — bool. Divide the data by $\sqrt{2}\,\sigma$ (see `data.stats.std`).
+- `data.opts.norm_data` — bool. Divide the data by $`\sqrt{2}\sigma`$ (see `data.stats.std`).
 - `data.opts.flip_data` — bool. Reverse the time axis when `true`.
 - `data.shape` — Tracks the shape of the input data (read-only).
 
@@ -79,7 +79,7 @@ By design, **the rutine section organizes the workflow** into four ordered block
 - `general.highest_freq` — float.  Upper frequency bound used when defining the smallest admissible scale. Physical units. 
 - `general.int_scale` — float. Integral length scale $L$. Physical units.
 - `general.taylor_scale` — float. Taylor microscale $\lambda$. Physical units.
-- `general.nbins` — int or `"auto"` (=$10\times\text{range}/\sigma$, see `data.stats.range` and `data.stats.std`)
+- `general.nbins` — int or `"auto"` (=$`10\times\text{range}/\sigma`$, see `data.stats.range` and `data.stats.std`)
 
 > The *general* `auto` values are computed during the pre-analysis step by **`p0.compute_and_write_general_autovalues`**.
 
@@ -103,18 +103,18 @@ Draw the empirical probability-density function.
 
 
 #### `plot_spectrum`
-Plot both the raw spectrum $E(f)$ and the compensated spectrum $E(f)\,f^{p}$.
+Plot both the raw spectrum $E(f)$ and the compensated spectrum $E(f)f^{p}$.
 
-- `comp_exponent` — float (string). Exponent $p$ for spectral compensation.  
+- `comp_exponent` — float (string). Exponent $p$ for spectral compensation. 
 - `moving_average_nbins` — int, `"auto"` (= $10 \times$ `general.nbins`), or `null`. Log-spaced smoothing windows; `null` disables it.  
-- `general.fs` — sets the frequency axis.  
-- `general.int_scale` — marks the integral-scale position $1/L$.  
+- `general.fs` — sets the frequency axis.
+- `general.int_scale` — marks the integral-scale position $1/L$.
 - `general.taylor_scale` — marks the Taylor-microscale position $1/\lambda$.
 
 
 ###  Part 2 — Markov <a name="part2"></a>
 #### General
-- `p2.general.markov_scale_us` — int or `"auto"` (=$\lambda\,f_s/U$). Sample units.
+- `p2.general.markov_scale_us` — int or `"auto"` (=$`\lambda\,f_s/U`$). Sample units.
 - `nbins` — int or `"auto"`(=`general.nbins`). Default histogram bin count for all Part 2 PDFs.
 - `p2.general.min_events` — int. Minimum per-bin count tolerable.
 
@@ -145,7 +145,7 @@ Estimate conditional moments $M_{11},M_{21},M_{31},M_{41}$ and the associated de
 - `general.fs`, `general.taylor_hyp_vel` — Converts physical units to sample units.
 
 #### `compute_km_coeffs_estimation`
-Estimate the Kramers–Moyal coefficients $D^{(1)}\!\dots D^{(4)}$ from the previously saved conditional moments; the result is stored in `km_coeffs_estimation.npz`.
+Estimate the Kramers–Moyal coefficients $D^{(1)}\dots D^{(4)}$ from the previously saved conditional moments; the result is stored in `km_coeffs_estimation.npz`.
 
 - `p2.general.markov_scale_us` — Fixes the short offset $\Delta$ used in all fits.
 - `p2.general.nbins` — Histogram bins for the increment PDFs.
@@ -154,7 +154,7 @@ Estimate the Kramers–Moyal coefficients $D^{(1)}\!\dots D^{(4)}$ from the prev
 - `general.fs`, `general.taylor_hyp_vel` — Converts physical units to sample units.
 
 #### `plot_km_coeffs_estimation`
-3-D scatter plots of $D^{(1)}\!\dots D^{(4)}$ against the normalised increment $u_s/\sigma_\infty$ and scale $s/\lambda$.
+3-D scatter plots of $D^{(1)}\dots D^{(4)}$ against the normalised increment $u_s/\sigma_\infty$ and scale $s/\lambda$.
 
 - `general.taylor_scale` — Normalise the scale axis.
 
