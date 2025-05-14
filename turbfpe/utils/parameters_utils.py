@@ -81,15 +81,15 @@ class Params:
 
         data = np.ma.array(data, mask=np.isnan(data))
 
-        prop_to_use = self.read("data.prop_to_use")
-        data = trim_data(data, prop_to_use)
-
         if flat:
             data = data.compressed()
         elif data.ndim == 1:
             data = data[np.newaxis, :]
         else:
             pass
+
+        prop_to_use = self.read("data.prop_to_use")
+        data = trim_data(data, prop_to_use)
 
         if ignore_opts:
             return data
@@ -141,15 +141,22 @@ class Params:
 
 def trim_data(data, prop_to_use):
     prop_to_use = np.array(prop_to_use)
-    if data.ndim != prop_to_use.size:
+
+    # remove axes of length 1 to have the right .ndim
+    squeeze_data = np.squeeze(data)
+
+    if squeeze_data.ndim != prop_to_use.size:
         raise ValueError(
-            f"data.prop_to_use {repr(prop_to_use)} is not compatible with data.shape={repr(data.shape)}"
+            f"data.prop_to_use {repr(prop_to_use)} is not compatible with data.shape={repr(squeeze_data.shape)}"
         )
 
-    if data.ndim == 1:
+    if squeeze_data.ndim == 1:
         tot_size = data.size
-        data = data[: int(tot_size * prop_to_use)]
-    elif data.ndim == 2:
+        if data.ndim == 1:
+            data = data[: int(tot_size * prop_to_use)]
+        else:
+            data = data[:, : int(tot_size * prop_to_use)]
+    elif squeeze_data.ndim == 2:
         tot_size_1, tot_size_2 = data.shape
         prop_1, prop_2 = prop_to_use
         data = data[: int(tot_size_1 * prop_1), : int(tot_size_2 * prop_2)]
