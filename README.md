@@ -79,6 +79,7 @@ By design, **the rutine section organizes the workflow** into four ordered block
 - `general.highest_freq` — float.  Upper frequency bound used when defining the smallest admissible scale. Physical units. 
 - `general.int_scale` — float. Integral length scale $L$. Physical units.
 - `general.taylor_scale` — float. Taylor microscale $\lambda$. Physical units.
+- `general.taylor_hyp_vel` — float. Advection velocity for Taylor’s hypothesis (space–time conversion); set this to 1.0 when both the input data and the prescribed scales are already in temporal units.
 - `general.nbins` — int or `"auto"` (=$`10\times\text{range}/\sigma`$, see `data.stats.range` and `data.stats.std`)
 
 > The *general* `auto` values are computed during the pre-analysis step by **`p0.compute_and_write_general_autovalues`**.
