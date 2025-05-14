@@ -48,26 +48,6 @@ def compute_and_write_general_autovalues_params(data, params: Params):
     data_std = params.read("data.stats.std")
     data_range = params.read("data.stats.range")
 
-    # Computing these parameters might introduce more noise than actual benefits, especially since they're not used.
-    # if params.is_auto("general.epsilon"):
-    #     tmp = (
-    #         15
-    #         * params.read("general.nu")
-    #         * data_std**2
-    #         / params.read("general.taylor_scale") ** 2
-    #     )
-    #     params.write("general.epsilon", tmp)
-
-    # if params.is_auto("general.kolmogorov_length"):
-    #     tmp = (params.read("general.nu") ** 3 / params.read("general.epsilon")) ** (
-    #         1 / 4
-    #     )
-    #     params.write("general.kolmogorov_length", tmp)
-
-    # if params.is_auto("general.kolmogorov_time"):
-    #     tmp = (params.read("general.nu") / params.read("general.epsilon")) ** (1 / 2)
-    #     params.write("general.kolmogorov_time", tmp)
-
     if params.is_auto("general.nbins"):
         tmp = int(10 * data_range / data_std)
         params.write("general.nbins", tmp)
