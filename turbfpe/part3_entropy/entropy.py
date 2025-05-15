@@ -7,11 +7,9 @@ from ..utils.logger_setup import logger
 from ..utils.mpl_utils import mpl_setup, save_fig
 from ..utils.parameters_utils import Params, trim_data
 from ..utils.storing_clases import Entropies, KMCoeffs, KMCoeffsEstimationGroup
-from .entropy_computation import (
-    compute_entropy,
-    compute_km_coeffs_ift_opti,
-    plot_entropy_and_ift,
-)
+from .entropy_computation import compute_entropy
+from .ift_optimization import compute_km_coeffs_ift_opti
+from .plot_functions import plot_entropy
 
 
 def exec_routine(params_file):
@@ -99,11 +97,11 @@ def compute_km_coeffs_ift_opti_params(data, params):
         logger.info(f"Trimmed data. The new shape is {data.shape}")
 
     km_coeffs_stp_opti = KMCoeffs.load_npz(
-        params.format_output_filename_for_data(f"km_coeffs_stp_opti.npz")
+        params.format_output_filename_for_data("km_coeffs_stp_opti.npz")
     )
 
     km_coeffs_est_group = KMCoeffsEstimationGroup.load_npz(
-        params.format_output_filename_for_data(f"km_coeffs_estimation.npz")
+        params.format_output_filename_for_data("km_coeffs_estimation.npz")
     )
     scales_for_optimization = np.array([
         km_coeffs_est.scale for km_coeffs_est in km_coeffs_est_group
@@ -141,13 +139,13 @@ def compute_km_coeffs_ift_opti_params(data, params):
     )
 
 
-def _plot_entropy_and_ift_params(_, params, opti_type):
+def _plot_entropy_params(_, params, opti_type):
     entropies = Entropies.load_npz(
         params.format_output_filename_for_data(f"entropies_{opti_type}_opti.npz")  #
     )
-    nbins = params.read(f"p3.plot_entropy_and_ift_for_{opti_type}_opti.nbins")
+    nbins = params.read(f"p3.plot_entropy_{opti_type}_opti.nbins")
 
-    out = plot_entropy_and_ift(entropies, nbins)
+    out = plot_entropy(entropies, nbins)
 
     if params.read("config.mpl.save_figures"):
         save_fig(
@@ -163,9 +161,9 @@ def _plot_entropy_and_ift_params(_, params, opti_type):
     return out
 
 
-def plot_entropy_and_ift_for_stp_opti_params(_, params):
-    _plot_entropy_and_ift_params(_, params, opti_type="stp")
+def plot_entropy_stp_opti_params(_, params):
+    _plot_entropy_params(_, params, opti_type="stp")
 
 
-def plot_entropy_and_ift_for_ift_opti_params(_, params):
-    _plot_entropy_and_ift_params(_, params, opti_type="ift")
+def plot_entropy_ift_opti_params(_, params):
+    _plot_entropy_params(_, params, opti_type="ift")
