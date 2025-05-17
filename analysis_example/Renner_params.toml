@@ -33,6 +33,10 @@ part3_entropy = [
   "compute_km_coeffs_ift_opti",
   "compute_entropy_ift_opti",
   "plot_entropy_ift_opti",
+
+  "compute_km_coeffs_dft_opti",
+  "compute_entropy_dft_opti",
+  "plot_entropy_dft_opti",
 ]
 
 [data]
@@ -159,6 +163,15 @@ nbins          = "!auto"  # int or auto.
   tol_D2    = 0.1  # float.
   iter_max  = 5    # int.
 
+[p3.compute_km_coeffs_dft_opti]
+  # uses -> km_coeffs_stp_opti.npz, km_coeffs_estimation.npz (only to get the scales),
+  #         p3.general.smallest_scale, p3.general.largest_scale,
+  #         p3.general.scale_subsample_step_us, p3.general.available_ram_gb,
+  #         general.fs, general.taylor_scale, general.taylor_hyp_vel and
+  tol_D1    = 0.1  # float.
+  tol_D2    = 0.1  # float.
+  iter_max  = 1    # int.
+
 [p3.compute_entropy]
   # uses -> km_coeffs_(stp|ift)_opti.npz and
   #         p3.general.smallest_scale, p3.general.largest_scale,
@@ -173,5 +186,9 @@ nbins          = "!auto"  # int or auto.
   nbins = 300  # int.
 
 [p3.plot_entropy_ift_opti]
+  # uses -> entropies_ift_opti.npy and
+  nbins = 300  # int.
+
+[p3.plot_entropy_dft_opti]
   # uses -> entropies_ift_opti.npy and
   nbins = 300  # int.

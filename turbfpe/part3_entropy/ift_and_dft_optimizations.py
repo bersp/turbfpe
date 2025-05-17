@@ -3,7 +3,11 @@ from scipy.optimize import curve_fit, minimize
 
 from ..utils.logger_setup import logger
 from ..utils.storing_clases import KMCoeffs
+from ..utils.general import get_pdf
 from .entropy_computation import get_entropies
+
+
+# IFT Opti
 
 
 def compute_km_coeffs_ift_opti(
@@ -237,6 +241,242 @@ def ift_run_optimization(
     )
     optimization_history["n_iter"] = np.arange(len(optimization_history["error"]))
     return res, optimization_history
+
+
+# DFT Opti
+
+
+def compute_km_coeffs_dft_opti(
+    data,
+    km_coeffs_stp_opti,
+    scales_for_optimization,
+    tol_D1,
+    tol_D2,
+    iter_max,
+    fs,
+    smallest_scale,
+    largest_scale,
+    scale_subsample_step_us,
+    taylor_scale,
+    taylor_hyp_vel,
+    available_ram_gb,
+):
+    overlap_trajs_flag = 0  # don't use overlap trajs to optimize
+
+    scales_dimless = scales_for_optimization / taylor_scale
+    n_scales = scales_dimless.size
+    d11 = km_coeffs_stp_opti.eval_d11(scales_dimless)
+    d20 = km_coeffs_stp_opti.eval_d20(scales_dimless)
+    d21 = km_coeffs_stp_opti.eval_d21(scales_dimless)
+    d22 = km_coeffs_stp_opti.eval_d22(scales_dimless)
+    x0 = np.concatenate([d11, d20, d21, d22])
+    lower_bound = np.empty_like(x0)
+    upper_bound = np.empty_like(x0)
+    lower_bound[0:n_scales] = x0[0:n_scales] - np.abs(x0[0:n_scales] * tol_D1)
+    upper_bound[0:n_scales] = x0[0:n_scales] + np.abs(x0[0:n_scales] * tol_D1)
+    for i in range(1, 4):
+        start = i * n_scales
+        end = (i + 1) * n_scales
+        lower_bound[start:end] = x0[start:end] - np.abs(x0[start:end] * tol_D2)
+        upper_bound[start:end] = x0[start:end] + np.abs(x0[start:end] * tol_D2)
+    upper_bound[0:n_scales] = np.minimum(upper_bound[0:n_scales], 0)
+    lower_bound[n_scales : 2 * n_scales] = np.maximum(
+        lower_bound[n_scales : 2 * n_scales], 0
+    )
+    lower_bound[3 * n_scales : 4 * n_scales] = np.maximum(
+        lower_bound[3 * n_scales : 4 * n_scales], 0
+    )
+    _, optimization_history = dft_run_optimization(
+        x0,
+        lower_bound,
+        upper_bound,
+        iter_max,
+        scales_dimless,
+        n_scales,
+        km_coeffs_stp_opti,
+        largest_scale,
+        smallest_scale,
+        data,
+        fs,
+        scale_subsample_step_us,
+        taylor_scale,
+        taylor_hyp_vel,
+        overlap_trajs_flag,
+        available_ram_gb,
+    )
+    history_fval = np.array(optimization_history["error"])
+    best_index = np.argmin(history_fval)
+    best_x = optimization_history["x_iter"][best_index]
+    popt_d11 = fit_d1j(scales_dimless, best_x[0:n_scales], km_coeffs_stp_opti)
+    popt_d20, popt_d21, popt_d22 = fit_d2j(
+        scales_dimless, best_x, n_scales, km_coeffs_stp_opti
+    )
+
+    km_coeffs_dft_opti = KMCoeffs(
+        a11=popt_d11[0],
+        b11=popt_d11[2],
+        c11=popt_d11[1],
+        a20=popt_d20[0],
+        b20=popt_d20[2],
+        c20=popt_d20[1],
+        a21=popt_d21[0],
+        b21=popt_d21[2],
+        c21=popt_d21[1],
+        a22=popt_d22[0],
+        b22=popt_d22[2],
+        c22=popt_d22[1],
+    )
+
+    return km_coeffs_dft_opti, optimization_history
+
+
+def dft_objective_function(
+    x0,
+    scales_dimless,
+    n_scales,
+    km_coeffs,
+    largest_scale,
+    smallest_scale,
+    data,
+    fs,
+    scale_subsample_step_us,
+    taylor_scale,
+    taylor_hyp_vel,
+    overlap_trajs_flag,
+    available_ram_gb,
+):
+    # Fit parameters.
+    popt_d11 = fit_d1j(scales_dimless, x0[:n_scales], km_coeffs)
+    popt_d20, popt_d21, popt_d22 = fit_d2j(scales_dimless, x0, n_scales, km_coeffs)
+
+    # Create km_coeffs object.
+    km_coeffs = KMCoeffs(
+        a11=popt_d11[0],
+        b11=popt_d11[2],
+        c11=popt_d11[1],
+        a20=popt_d20[0],
+        b20=popt_d20[2],
+        c20=popt_d20[1],
+        a21=popt_d21[0],
+        b21=popt_d21[2],
+        c21=popt_d21[1],
+        a22=popt_d22[0],
+        b22=popt_d22[2],
+        c22=popt_d22[1],
+    )
+
+    # Compute entropy.
+    _, _, total_entropy = get_entropies(
+        data,
+        km_coeffs,
+        fs,
+        smallest_scale,
+        largest_scale,
+        scale_subsample_step_us,
+        taylor_scale,
+        taylor_hyp_vel,
+        overlap_trajs_flag,
+        available_ram_gb,
+    )
+    total_entropy = total_entropy[~np.isnan(total_entropy)]
+
+    bound = np.max(np.abs(total_entropy))
+    bins = np.linspace(-bound, bound, 151, endpoint=True)
+    centers_tot, pdf_tot = get_pdf(total_entropy, bins=bins)
+    ent_abs_l, dft_l = [], []
+
+    centers_positive = centers_tot[centers_tot.size // 2 :]
+    pdf_positive = pdf_tot[centers_tot.size // 2 :]
+
+    # centers_negative = centers_tot[: centers_tot.size // 2]
+    pdf_negative = pdf_tot[: centers_tot.size // 2]
+
+    pdf_positive[pdf_positive == 0] = np.nan
+    pdf_negative[pdf_negative == 0] = np.nan
+
+    for i in range(len(centers_positive)):
+        ent_abs_l.append(centers_positive[i])
+        dft = np.log(pdf_positive[i] / pdf_negative[-i - 1])
+        dft_l.append(dft)
+
+    ent_abs_arr = np.array(ent_abs_l)
+    dft_arr = np.array(dft_l)
+
+    # Linear error
+    # error = np.nansum(np.abs(ent_abs_arr - dft_arr))
+
+    # Weihted error (slower)
+    weights = pdf_positive / np.nansum(pdf_positive)
+    error = np.nansum(weights * np.abs(ent_abs_arr - dft_arr))
+
+    return error, dft_arr
+
+
+def dft_run_optimization(
+    x0,
+    lower_bound,
+    upper_bound,
+    iter_max,
+    scales_dimless,
+    n_scales,
+    km_coeffs,
+    largest_scale,
+    smallest_scale,
+    data,
+    fs,
+    scale_subsample_step_us,
+    taylor_scale,
+    taylor_hyp_vel,
+    overlap_trajs_flag,
+    available_ram_gb,
+):
+    bounds = [(_l, _u) for _l, _u in zip(lower_bound, upper_bound)]
+    optimization_history = {"x_iter": [], "error": []}
+
+    def objective(x):
+        error, _ = dft_objective_function(
+            x,
+            scales_dimless,
+            n_scales,
+            km_coeffs,
+            largest_scale,
+            smallest_scale,
+            data,
+            fs,
+            scale_subsample_step_us,
+            taylor_scale,
+            taylor_hyp_vel,
+            overlap_trajs_flag,
+            available_ram_gb,
+        )
+        optimization_history["x_iter"].append(np.copy(x))
+        optimization_history["error"].append(error)
+        return error
+
+    def callback(_):
+        iter_n = len(optimization_history["error"])
+        error = optimization_history["error"][-1]
+        logger.info(
+            "\n"
+            + "-" * 40
+            + f"\n# Evaluations: {iter_n}\nError: {error}\n"
+            + "-" * 40
+            + "\n"
+        )
+
+    res = minimize(
+        objective,
+        x0,
+        method="L-BFGS-B",
+        bounds=bounds,
+        options={"maxiter": iter_max, "gtol": 1e-8},
+        callback=callback,
+    )
+    optimization_history["n_iter"] = np.arange(len(optimization_history["error"]))
+    return res, optimization_history
+
+
+# General
 
 
 def fit_d1j(scales_dimless, y, km_coeffs):
