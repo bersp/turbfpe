@@ -28,11 +28,11 @@ part3_entropy = [
   "compute_entropy_autovalues",
 
   "compute_entropy_stp_opti",
-  "plot_entropy_and_ift_for_stp_opti",
+  "plot_entropy_stp_opti",
 
   "compute_km_coeffs_ift_opti",
   "compute_entropy_ift_opti",
-  "plot_entropy_and_ift_for_ift_opti",
+  "plot_entropy_ift_opti",
 ]
 
 [data]
@@ -168,10 +168,10 @@ nbins          = "!auto"  # int or auto.
 
   # writes -> entropies_(stp|ift)_opti.npy.
 
-[p3.plot_entropy_and_ift_for_stp_opti]
+[p3.plot_entropy_stp_opti]
   # uses -> entropies_stp_opti.npy and
   nbins = 300  # int.
 
-[p3.plot_entropy_and_ift_for_ift_opti]
+[p3.plot_entropy_ift_opti]
   # uses -> entropies_ift_opti.npy and
   nbins = 300  # int.
