@@ -198,13 +198,13 @@ Display the fitted $D^{(1)}$ and $D^{(2)}$ surfaces together with the scatter of
 - `p3.general.overlap_trajs_flag` — bool. Enable (`true`) or disable (`false`) overlapping trajectories.
 - `p3.general.available_ram_gb` — float. Available RAM for chunking (GB).
 
-#### `compute_km_coeffs_ift_opti`
-Refine the short-time–propagator coefficients so that they also satisfy the **integral fluctuation theorem (IFT)**; the resulting set is saved to `km_coeffs_ift_opti.npz`.
+#### `compute_km_coeffs_(ift|dft)_opti`
+Refine the short-time–propagator coefficients so that they also satisfy the **integral fluctuation theorem (IFT)** or the **detailed fluctuation theorem (dft)**; the resulting set is saved to `km_coeffs_(ift|dft)_opti.npz`.
 
 It uses `km_coeffs_stp_opti.npz` for the initial coefficients and `km_coeffs_estimation.npz` to get the optimisation scales.
 
-- `tol_D1` — float [0 – 1]. Relative search window for each $d_{11}(s)$ value.  
-- `tol_D2` — float [0 – 1]. Relative search window for each $d_{2j}(s)$ value.  
+- `tol_D1` — float [0 – 1]. Relative search window for each $d_{11}(s)$ value.
+- `tol_D2` — float [0 – 1]. Relative search window for each $d_{2j}(s)$ value.
 - `iter_max` — int. Maximum L-BFGS-B iterations. The algorithm is very efficient finding the minimum but the general optimization is slow, so ~ 5 is a good number to start.
 - `p3.general.smallest_scale` — Minimum cascade scale $s_{\min}$.
 - `p3.general.largest_scale` — Maximum cascade scale $s_{\max}$.
@@ -214,8 +214,9 @@ It uses `km_coeffs_stp_opti.npz` for the initial coefficients and `km_coeffs_est
 - `general.taylor_scale` — Normalises the scales before doing the optimization.
 - `general.fs`, `general.taylor_hyp_vel` — Converts physical units to sample units.
 
-#### `compute_entropy_(stp|ift)_opti`
-Compute the medium, system and total entropy along the cascade using the (**short-time-propagator–optimized|ift-optimized**) KM coefficients; results are saved to `entropies_(stp|ift)_opti.npz`.
+
+#### `compute_entropy_(stp|ift|dft)_opti`
+Compute the medium, system and total entropy along the cascade using the (**short-time-propagator–optimized|ift-optimized|dft-optimized**) KM coefficients; results are saved to `entropies_(stp|ift|dft)_opti.npz`.
 
 - `p3.general.smallest_scale` — Minimum cascade scale $s_{\min}$.
 - `p3.general.largest_scale` — Maximum cascade scale $s_{\max}$.
@@ -223,7 +224,7 @@ Compute the medium, system and total entropy along the cascade using the (**shor
 - `p3.general.overlap_trajs_flag` — Whatever use or not overlapping trajectories.
 - `p3.general.available_ram_gb` — Available RAM for chunking (GB). 
 
-#### `plot_entropy_and_ift_for_(ift|stp)_opti`
-Plot the PDFs of medium, system and total entropy, using the data from `entropies_(stp|ift)_opti.npz`. Check the integral fluctuation theorem (IFT) and the detailed fluctuation theorem (DFT).
+#### `plot_entropy_(ift|stp|dft)_opti`
+Plot the PDFs of medium, system and total entropy, using the data from `entropies_(stp|ift|dft)_opti.npz`. Check the integral fluctuation theorem (IFT) and the detailed fluctuation theorem (DFT).
 
 - `nbins` — int. Histogram bins for the entropy PDFs and DFT plot.
