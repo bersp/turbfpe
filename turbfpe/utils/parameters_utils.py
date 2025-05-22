@@ -81,15 +81,15 @@ class Params:
 
         data = np.ma.array(data, mask=np.isnan(data))
 
+        prop_to_use = self.read("data.prop_to_use")
+        data = trim_data(data, prop_to_use)
+
         if flat:
             data = data.compressed()
         elif data.ndim == 1:
             data = data[np.newaxis, :]
         else:
             pass
-
-        prop_to_use = self.read("data.prop_to_use")
-        data = trim_data(data, prop_to_use)
 
         if ignore_opts:
             return data
