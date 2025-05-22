@@ -143,7 +143,7 @@ def ift_objective_function(
     )
 
     # Compute entropy.
-    _, _, total_entropy = get_entropies(
+    _, _, total_entropy, _ = get_entropies(
         data,
         km_coeffs,
         fs,

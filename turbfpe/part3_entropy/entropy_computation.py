@@ -16,7 +16,7 @@ def compute_entropy(
     overlap_trajs_flag,
     available_ram_gb,
 ):
-    medium_entropy, system_entropy, total_entropy = get_entropies(
+    medium_entropy, system_entropy, total_entropy, idx_track = get_entropies(
         data,
         km_coeffs,
         fs,
@@ -33,6 +33,7 @@ def compute_entropy(
         medium_entropy=medium_entropy,
         system_entropy=system_entropy,
         total_entropy=total_entropy,
+        idx_track=idx_track,
     )
 
     return (
@@ -155,8 +156,13 @@ def get_entropies(
             data, indep_scales_idxs, trajectory_chunk_length, available_ram_gb
         )
 
-    medium_entropy, system_entropy, total_entropy = compute_entropies_for_all_scales(
-        km_coeffs, incs_for_all_scales_iterator, indep_scales, scale_subsample_step_us
+    medium_entropy, system_entropy, total_entropy, idx_track = (
+        compute_entropies_for_all_scales(
+            km_coeffs,
+            incs_for_all_scales_iterator,
+            indep_scales,
+            scale_subsample_step_us,
+        )
     )
 
     # This works but for the moment I will not returned it
@@ -176,14 +182,15 @@ def get_entropies(
     # km_coeffs,
     # )
 
-    return medium_entropy, system_entropy, total_entropy
+    return medium_entropy, system_entropy, total_entropy, idx_track
 
 
 def compute_entropies_for_all_scales(
     km_coeffs, incs_for_all_scales_iterator, indep_scales, scale_subsample_step_us
 ):
     medium_entropy_l, system_entropy_l, total_entropy_l = [], [], []
-    for incs_for_all_scales in incs_for_all_scales_iterator:
+    idx_track_l = []
+    for incs_for_all_scales, incs_for_all_scales_idx in incs_for_all_scales_iterator:
         # Independent increments for scales separated by (probably) one markovian step
 
         sampled_scales = indep_scales[::scale_subsample_step_us]
@@ -212,11 +219,15 @@ def compute_entropies_for_all_scales(
         system_entropy_l.append(system_entropy)
         total_entropy_l.append(total_entropy)
 
+        idx_track_l.append(incs_for_all_scales_idx)
+
     medium_entropy = np.concatenate(medium_entropy_l)
     system_entropy = np.concatenate(system_entropy_l)
     total_entropy = np.concatenate(total_entropy_l)
 
-    return medium_entropy, system_entropy, total_entropy
+    idx_track = np.concatenate(idx_track_l, axis=0)
+
+    return medium_entropy, system_entropy, total_entropy, idx_track
 
 
 def get_non_overlap_idep_incs(
@@ -225,8 +236,9 @@ def get_non_overlap_idep_incs(
     trajectory_chunk_length: int,
     available_ram_gb: float,
 ):
-    # TODO: Generalize this to data with other shapes
-    data = data.compressed()
+    orig_shape = data.shape
+    flat_idx = np.flatnonzero(~data.mask.ravel())
+    data = data.compressed()  # TODO: Generalize this to data with other shapes
 
     data_len = len(data)
     step_size = trajectory_chunk_length + 1
@@ -239,7 +251,6 @@ def get_non_overlap_idep_incs(
     max_chunk_size = _compute_max_chunk_size(
         available_ram_gb, n_scales=len(indep_scales_idxs)
     )
-
     if max_chunk_size < 1:
         raise MemoryError("Not enough RAM available for even one trajectory chunk.")
 
@@ -248,7 +259,10 @@ def get_non_overlap_idep_incs(
         chunk_incs = (
             data[chunk_starts[:, None] + indep_scales_idxs] - data[chunk_starts, None]
         )
-        yield chunk_incs
+        chunk_coords = np.stack(
+            np.unravel_index(flat_idx[chunk_starts], orig_shape), axis=1
+        )
+        yield chunk_incs, chunk_coords
 
 
 def get_overlap_incs(
