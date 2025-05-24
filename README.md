@@ -28,7 +28,7 @@ The `-e` flag installs the package in editable mode, meaning Python imports the 
 
 # Usage
 For a concrete walkthrough, see the **`analysis_example/`** directory.  
-It holds the filtered velocity data set from the reference study (`Renner_8000Hz_filter.npy`), a complete parameter file (`Renner_params.toml`), and a short driver script (`analysis.py`).  The script parses the TOML file, executes the functions listed under `rutine`, and writes results to the locations defined in the configuration tables.
+It holds the filtered velocity data set from the reference study (`Renner_8000Hz_filter.npy`), a complete parameter file (`Renner_params.toml`), and a short driver script (`analysis.py`).  The script parses the TOML file, executes the functions listed under `routine`, and writes results to the locations defined in the configuration tables.
 
 For a description of the parameters and each routine entry, consult the corresponding sections in the documentation.
 
@@ -39,7 +39,7 @@ All analysis settings live in a single **TOML** file—commonly called `params.t
 Parameters in this file fall into three broad categories: **configuration parameters** (paths and plotting options), **general parameters** (measurement-wide constants such as the sampling frequency, integral scale, or Taylor microscale),
 and **function-specific parameters** (settings that belong to one routine only, defined in the corresponding section (e.g. p2.compute_wilcoxon_test.\*)).
 
-By design, **the rutine section organizes the workflow** into four ordered blocks: **preanalysis**, **turbulence diagnostics**, **Markov analysis**, and **entropy production**. Each list entry is a literal function name; at runtime the driver reads these strings and calls the corresponding Python function in sequence. Leaving all entries intact executes the full end-to-end pipeline, but you can quickly comment-out or remove individual lines (or whole sub-lists) to skip stages, rerun only a subset, or pause after a checkpoint and experiment with the outputs before continuing.
+By design, **the routine section organizes the workflow** into four ordered blocks: **preanalysis**, **turbulence diagnostics**, **Markov analysis**, and **entropy production**. Each list entry is a literal function name; at runtime the driver reads these strings and calls the corresponding Python function in sequence. Leaving all entries intact executes the full end-to-end pipeline, but you can quickly comment-out or remove individual lines (or whole sub-lists) to skip stages, rerun only a subset, or pause after a checkpoint and experiment with the outputs before continuing.
 
 ## Configuration parameters
 
