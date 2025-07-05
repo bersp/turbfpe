@@ -34,22 +34,35 @@ def compute_km_coeffs_ift_opti(
     d21 = km_coeffs_stp_opti.eval_d21(scales_dimless)
     d22 = km_coeffs_stp_opti.eval_d22(scales_dimless)
     x0 = np.concatenate([d11, d20, d21, d22])
+
     lower_bound = np.empty_like(x0)
     upper_bound = np.empty_like(x0)
-    lower_bound[0:n_scales] = x0[0:n_scales] - np.abs(x0[0:n_scales] * tol_D1)
-    upper_bound[0:n_scales] = x0[0:n_scales] + np.abs(x0[0:n_scales] * tol_D1)
-    for i in range(1, 4):
-        start = i * n_scales
-        end = (i + 1) * n_scales
-        lower_bound[start:end] = x0[start:end] - np.abs(x0[start:end] * tol_D2)
-        upper_bound[start:end] = x0[start:end] + np.abs(x0[start:end] * tol_D2)
-    upper_bound[0:n_scales] = np.minimum(upper_bound[0:n_scales], 0)
-    lower_bound[n_scales : 2 * n_scales] = np.maximum(
+
+    # D1 bounds
+    start = 0
+    end = n_scales
+    lower_bound[start:end] = x0[start:end] - np.abs(x0[start:end] * tol_D1)
+    upper_bound[start:end] = x0[start:end] + np.abs(x0[start:end] * tol_D1)
+
+    # D2 bounds
+    start = n_scales
+    end = 4 * n_scales
+    lower_bound[start:end] = x0[start:end] - np.abs(x0[start:end] * tol_D2)
+    upper_bound[start:end] = x0[start:end] + np.abs(x0[start:end] * tol_D2)
+
+    # the constraints were set in a physically and mathematically meaningful way:
+    upper_bound[0:n_scales] = np.minimum(upper_bound[0:n_scales], 0)  # D1
+    lower_bound[n_scales : 2 * n_scales] = np.maximum(  # D2
         lower_bound[n_scales : 2 * n_scales], 0
     )
-    lower_bound[3 * n_scales : 4 * n_scales] = np.maximum(
+    # no constraints for 2 * n_scales : 3 * n_scales
+    lower_bound[3 * n_scales : 4 * n_scales] = np.maximum(  # D2
         lower_bound[3 * n_scales : 4 * n_scales], 0
     )
+
+    # sometimes lower and upper are numbers very close to 0 but they are in the wrong order
+    upper_bound = np.maximum(upper_bound, lower_bound)
+
     _, optimization_history = ift_run_optimization(
         x0,
         lower_bound,
@@ -270,22 +283,35 @@ def compute_km_coeffs_dft_opti(
     d21 = km_coeffs_stp_opti.eval_d21(scales_dimless)
     d22 = km_coeffs_stp_opti.eval_d22(scales_dimless)
     x0 = np.concatenate([d11, d20, d21, d22])
+
     lower_bound = np.empty_like(x0)
     upper_bound = np.empty_like(x0)
-    lower_bound[0:n_scales] = x0[0:n_scales] - np.abs(x0[0:n_scales] * tol_D1)
-    upper_bound[0:n_scales] = x0[0:n_scales] + np.abs(x0[0:n_scales] * tol_D1)
-    for i in range(1, 4):
-        start = i * n_scales
-        end = (i + 1) * n_scales
-        lower_bound[start:end] = x0[start:end] - np.abs(x0[start:end] * tol_D2)
-        upper_bound[start:end] = x0[start:end] + np.abs(x0[start:end] * tol_D2)
-    upper_bound[0:n_scales] = np.minimum(upper_bound[0:n_scales], 0)
-    lower_bound[n_scales : 2 * n_scales] = np.maximum(
+
+    # D1 bounds
+    start = 0
+    end = n_scales
+    lower_bound[start:end] = x0[start:end] - np.abs(x0[start:end] * tol_D1)
+    upper_bound[start:end] = x0[start:end] + np.abs(x0[start:end] * tol_D1)
+
+    # D2 bounds
+    start = n_scales
+    end = 4 * n_scales
+    lower_bound[start:end] = x0[start:end] - np.abs(x0[start:end] * tol_D2)
+    upper_bound[start:end] = x0[start:end] + np.abs(x0[start:end] * tol_D2)
+
+    # the constraints were set in a physically and mathematically meaningful way:
+    upper_bound[0:n_scales] = np.minimum(upper_bound[0:n_scales], 0)  # D1
+    lower_bound[n_scales : 2 * n_scales] = np.maximum(  # D2
         lower_bound[n_scales : 2 * n_scales], 0
     )
-    lower_bound[3 * n_scales : 4 * n_scales] = np.maximum(
+    # no constraints for 2 * n_scales : 3 * n_scales
+    lower_bound[3 * n_scales : 4 * n_scales] = np.maximum(  # D2
         lower_bound[3 * n_scales : 4 * n_scales], 0
     )
+
+    # sometimes lower and upper are numbers very close to 0 but they are in the wrong order
+    upper_bound = np.maximum(upper_bound, lower_bound)
+
     _, optimization_history = dft_run_optimization(
         x0,
         lower_bound,
