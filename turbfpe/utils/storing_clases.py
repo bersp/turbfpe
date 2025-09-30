@@ -167,7 +167,7 @@ class Entropies:
     medium_entropy: npt.NDArray[np.float64]
     system_entropy: npt.NDArray[np.float64]
     total_entropy: npt.NDArray[np.float64]
-    idx_track: npt.NDArray[np.float64]
+    idx_track: npt.NDArray[np.float64] = None
 
     def write_npz(self, filename: str) -> None:
         """

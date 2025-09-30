@@ -72,16 +72,8 @@ def _compute_entropy_params(data, params, opti_type):
     scale_subsample_step_us = params.read("p3.general.scale_subsample_step_us")
     taylor_scale = params.read("general.taylor_scale")
     taylor_hyp_vel = params.read("general.taylor_hyp_vel")
-    overlap_trajs_flag = params.read("p3.general.overlap_trajs_flag")
-    available_ram_gb = params.read("p3.general.available_ram_gb")
 
-    if overlap_trajs_flag:
-        prop_to_use = params.read("p3.general.prop_to_use")
-        data = trim_data(data, prop_to_use)
-        if not np.all(np.array(prop_to_use) == 1.0):
-            logger.info(f"Trimmed data. The new shape is {data.shape}")
-
-    entropies, *_ = compute_entropy(
+    entropies = compute_entropy(
         data,
         km_coeffs,
         fs,
@@ -90,8 +82,6 @@ def _compute_entropy_params(data, params, opti_type):
         scale_subsample_step_us,
         taylor_scale,
         taylor_hyp_vel,
-        overlap_trajs_flag,
-        available_ram_gb,
     )
 
     entropies.write_npz(
@@ -127,7 +117,6 @@ def compute_km_coeffs_ift_opti_params(data, params):
     scale_subsample_step_us = params.read("p3.general.scale_subsample_step_us")
     taylor_scale = params.read("general.taylor_scale")
     taylor_hyp_vel = params.read("general.taylor_hyp_vel")
-    available_ram_gb = params.read("p3.general.available_ram_gb")
 
     km_coeffs_ift_opti, _ = compute_km_coeffs_ift_opti(
         data,
@@ -142,7 +131,6 @@ def compute_km_coeffs_ift_opti_params(data, params):
         scale_subsample_step_us,
         taylor_scale,
         taylor_hyp_vel,
-        available_ram_gb,
     )
 
     km_coeffs_ift_opti.write_npz(

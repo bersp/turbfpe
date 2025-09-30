@@ -4,7 +4,7 @@ from scipy.optimize import curve_fit, minimize
 from ..utils.logger_setup import logger
 from ..utils.storing_clases import KMCoeffs
 from ..utils.general import get_pdf
-from .entropy_computation import get_entropies
+from .entropy_computation import compute_entropy
 
 
 # IFT Opti
@@ -23,10 +23,7 @@ def compute_km_coeffs_ift_opti(
     scale_subsample_step_us,
     taylor_scale,
     taylor_hyp_vel,
-    available_ram_gb,
 ):
-    overlap_trajs_flag = 0  # don't use overlap trajs to optimize
-
     scales_dimless = scales_for_optimization / taylor_scale
     n_scales = scales_dimless.size
     d11 = km_coeffs_stp_opti.eval_d11(scales_dimless)
@@ -78,8 +75,6 @@ def compute_km_coeffs_ift_opti(
         scale_subsample_step_us,
         taylor_scale,
         taylor_hyp_vel,
-        overlap_trajs_flag,
-        available_ram_gb,
     )
     history_fval = np.array(optimization_history["error"])
     best_index = np.argmin(history_fval)
@@ -119,8 +114,6 @@ def ift_objective_function(
     scale_subsample_step_us,
     taylor_scale,
     taylor_hyp_vel,
-    overlap_trajs_flag,
-    available_ram_gb,
 ):
     # Fit parameters.
     popt_d11 = fit_d1j(scales_dimless, x0[:n_scales], km_coeffs)
@@ -143,7 +136,7 @@ def ift_objective_function(
     )
 
     # Compute entropy.
-    _, _, total_entropy, _ = get_entropies(
+    _, _, total_entropy, _ = compute_entropy(
         data,
         km_coeffs,
         fs,
@@ -152,8 +145,7 @@ def ift_objective_function(
         scale_subsample_step_us,
         taylor_scale,
         taylor_hyp_vel,
-        overlap_trajs_flag,
-        available_ram_gb,
+        return_raw_arrays=True,
     )
 
     # Remove values that would cause overflow in exp(-total_entropy).
@@ -205,8 +197,6 @@ def ift_run_optimization(
     scale_subsample_step_us,
     taylor_scale,
     taylor_hyp_vel,
-    overlap_trajs_flag,
-    available_ram_gb,
 ):
     bounds = [(_l, _u) for _l, _u in zip(lower_bound, upper_bound)]
     optimization_history = {"x_iter": [], "error": [], "ift": []}
@@ -224,8 +214,6 @@ def ift_run_optimization(
             scale_subsample_step_us,
             taylor_scale,
             taylor_hyp_vel,
-            overlap_trajs_flag,
-            available_ram_gb,
         )
         optimization_history["x_iter"].append(np.copy(x))
         optimization_history["error"].append(error)
@@ -272,10 +260,7 @@ def compute_km_coeffs_dft_opti(
     scale_subsample_step_us,
     taylor_scale,
     taylor_hyp_vel,
-    available_ram_gb,
 ):
-    overlap_trajs_flag = 0  # don't use overlap trajs to optimize
-
     scales_dimless = scales_for_optimization / taylor_scale
     n_scales = scales_dimless.size
     d11 = km_coeffs_stp_opti.eval_d11(scales_dimless)
@@ -327,8 +312,6 @@ def compute_km_coeffs_dft_opti(
         scale_subsample_step_us,
         taylor_scale,
         taylor_hyp_vel,
-        overlap_trajs_flag,
-        available_ram_gb,
     )
     history_fval = np.array(optimization_history["error"])
     best_index = np.argmin(history_fval)
@@ -368,8 +351,6 @@ def dft_objective_function(
     scale_subsample_step_us,
     taylor_scale,
     taylor_hyp_vel,
-    overlap_trajs_flag,
-    available_ram_gb,
 ):
     # Fit parameters.
     popt_d11 = fit_d1j(scales_dimless, x0[:n_scales], km_coeffs)
@@ -392,7 +373,7 @@ def dft_objective_function(
     )
 
     # Compute entropy.
-    _, _, total_entropy = get_entropies(
+    _, _, total_entropy, _ = compute_entropy(
         data,
         km_coeffs,
         fs,
@@ -401,8 +382,7 @@ def dft_objective_function(
         scale_subsample_step_us,
         taylor_scale,
         taylor_hyp_vel,
-        overlap_trajs_flag,
-        available_ram_gb,
+        return_raw_arrays=True,
     )
     total_entropy = total_entropy[~np.isnan(total_entropy)]
 
@@ -453,8 +433,6 @@ def dft_run_optimization(
     scale_subsample_step_us,
     taylor_scale,
     taylor_hyp_vel,
-    overlap_trajs_flag,
-    available_ram_gb,
 ):
     bounds = [(_l, _u) for _l, _u in zip(lower_bound, upper_bound)]
     optimization_history = {"x_iter": [], "error": []}
@@ -472,8 +450,6 @@ def dft_run_optimization(
             scale_subsample_step_us,
             taylor_scale,
             taylor_hyp_vel,
-            overlap_trajs_flag,
-            available_ram_gb,
         )
         optimization_history["x_iter"].append(np.copy(x))
         optimization_history["error"].append(error)

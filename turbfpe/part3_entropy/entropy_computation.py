@@ -1,5 +1,4 @@
 import numpy as np
-from tqdm import tqdm
 
 from ..utils.storing_clases import Entropies, KMCoeffs
 
@@ -13,124 +12,65 @@ def compute_entropy(
     scale_subsample_step_us,
     taylor_scale,
     taylor_hyp_vel,
-    overlap_trajs_flag,
-    available_ram_gb,
+    return_raw_arrays=False,
 ):
-    medium_entropy, system_entropy, total_entropy, idx_track = get_entropies(
+    (
+        incs_for_all_scales,
+        indep_scales,
+        scale_subsample_step_us,
+        indep_scales_idxs,
+        traj_start_pairs,
+    ) = compute_scales(
         data,
-        km_coeffs,
         fs,
         smallest_scale,
         largest_scale,
         scale_subsample_step_us,
         taylor_scale,
         taylor_hyp_vel,
-        overlap_trajs_flag,
-        available_ram_gb,
     )
 
-    entropies = Entropies(
-        medium_entropy=medium_entropy,
-        system_entropy=system_entropy,
-        total_entropy=total_entropy,
-        idx_track=idx_track,
+    medium_entropy, system_entropy, total_entropy, idx_track = (
+        compute_entropies_for_all_scales(
+            km_coeffs=km_coeffs,
+            incs_for_all_scales=incs_for_all_scales,
+            indep_scales=indep_scales,
+            scale_subsample_step_us=scale_subsample_step_us,
+            indep_scales_idxs=indep_scales_idxs,
+            traj_start_pairs=traj_start_pairs,
+        )
     )
-
-    return (
-        entropies,
-        None,  # indep_scales,
-        None,  # incs_start_idxs,
-        None,  # indep_scales_idxs,
-        None,  # scale_subsample_step_us,
-        None,  # incs_for_all_scales,
-        None,  # lagrangian,
-        None,  # action,
-        None,  # momentum,
-        None,  # hamiltonian,
-        None,  # hamiltonian_derivative1,
-        None,  # hamiltonian_derivative2,
-    )
+    if return_raw_arrays:
+        return medium_entropy, system_entropy, total_entropy, idx_track
+    else:
+        entropies = Entropies(
+            medium_entropy=medium_entropy,
+            system_entropy=system_entropy,
+            total_entropy=total_entropy,
+            idx_track=idx_track,
+        )
+        return entropies
 
 
-def get_entropies(
+def compute_scales(
     data,
-    km_coeffs,
     fs,
     smallest_scale,
     largest_scale,
     scale_subsample_step_us,
     taylor_scale,
     taylor_hyp_vel,
-    overlap_trajs_flag,
-    available_ram_gb,
 ):
-    """
-    Computes the medium_entropy, system_entropy and total_entropy production for cascade trajs.
-
-    Parameters
-    ----------
-    data : ndarray
-        2D array with the data.
-    fs : float
-        Sampling frequency.
-    km_coeffs : KMCoeffs
-        Dataclass with Kramers-Moyal km_coeffs.
-    smallest_scale : float
-        The dimensionless smallest scale to be used.
-    largest_scale : float
-        The dimensionless largest scale to be used.
-    scale_subsample_step_us : int
-        Step size for subsampling scales.
-    taylor_scale : float
-        Taylor length scale (used to normalize other scales).
-    taylor_hyp_vel : float
-        Velocity used for distance-to-time conversion.
-    overlap_trajs_flag : float, optional
-    available_ram_gb : float, optional
-        Available RAM in GB for chunking. Default is 8 GB.
-
-    Returns
-    -------
-    medium_entropy : ndarray
-        Medium entropy production for each trajectory.
-    system_entropy : ndarray
-        System (Shannon) entropy production for each trajectory.
-    total_entropy : ndarray
-        Total entropy production = medium_entropy + system_entropy.
-    indep_scales : ndarray (COMMENTED)
-        Scale vector (dimensionless) from largest to smallest in the cascade.
-    incs_start_idxs : ndarray or None (COMMENTED)
-        Indices in data corresponding to the start of each trajectory.
-    indep_scales_idxs : ndarray (COMMENTED)
-        Indices for the scales used.
-    scale_subsample_step_us : int (COMMENTED)
-        Step size used for subsampling scales.
-    indep_incs_for_all_scales : ndarray or None (COMMENTED)
-        Matrix of increments for each trajectory.
-    lagrangian : ndarray or None (COMMENTED)
-        Lagrangian.
-    action : ndarray or None (COMMENTED)
-        Action functional (path integral of Lagrangian).
-    momentum : ndarray or None (COMMENTED)
-        Conjugate variable (Hamiltonian formalism).
-    hamiltonian : ndarray or None (COMMENTED)
-        Hamiltonian.
-    hamiltonian_derivative1 : ndarray or None (COMMENTED)
-        Auxiliary Hamiltonian derivative.
-    hamiltonian_derivative2 : ndarray or None (COMMENTED)
-        Auxiliary Hamiltonian derivative.
-    """
-
     to_us = fs / taylor_hyp_vel
 
-    # Use dimensionless scales.
+    # Dimensionless scales
     largest_scale_dimless = largest_scale / taylor_scale
     smallest_scale_dimless = smallest_scale / taylor_scale
 
     num_points = int(np.ceil(1.1 * largest_scale * to_us))
     all_indep_scales_dimless = np.arange(num_points) / to_us / taylor_scale
 
-    # Find indices closest to the target scales.
+    # Find the indices closest to the target scales.
     # For largest_scale, we want the last occurrence of the minimum difference.
     largest_index = all_indep_scales_dimless.size - np.argmin(
         np.abs(all_indep_scales_dimless[::-1] - largest_scale_dimless)
@@ -142,156 +82,140 @@ def get_entropies(
 
     trajectory_chunk_length = largest_index
 
-    # Take only the independent scales between the smallest and the largest scale.
+    # Independent scales between smallest and largest (descending)
     indep_scales_idxs = np.arange(smallest_index, largest_index + 1)[::-1]
     indep_scales = all_indep_scales_dimless[indep_scales_idxs]
 
-    # Choose between overlapping or non-overlapping increments
-    if overlap_trajs_flag:
-        incs_for_all_scales_iterator = get_overlap_incs(
-            data, indep_scales_idxs, trajectory_chunk_length, available_ram_gb
-        )
-    else:
-        incs_for_all_scales_iterator = get_non_overlap_idep_incs(
-            data, indep_scales_idxs, trajectory_chunk_length, available_ram_gb
-        )
-
-    medium_entropy, system_entropy, total_entropy, idx_track = (
-        compute_entropies_for_all_scales(
-            km_coeffs,
-            incs_for_all_scales_iterator,
-            indep_scales,
-            scale_subsample_step_us,
-        )
+    # Increments for all rows
+    incs_for_all_scales, traj_start_pairs = get_non_overlap_idep_incs(
+        data,
+        indep_scales_idxs,
+        trajectory_chunk_length,
     )
 
-    # This works but for the moment I will not returned it
-    # Lagrangian and Hamiltonian quantities
-    # (
-    # lagrangian,
-    # action,
-    # momentum,
-    # hamiltonian,
-    # hamiltonian_derivative1,
-    # hamiltonian_derivative2,
-    # ) = compute_path_integral(
-    # incs_deriv_central,
-    # incs_central,
-    # scales_central,
-    # scale_spacing_central,
-    # km_coeffs,
-    # )
-
-    return medium_entropy, system_entropy, total_entropy, idx_track
+    return (
+        incs_for_all_scales,
+        indep_scales,
+        scale_subsample_step_us,
+        indep_scales_idxs,
+        traj_start_pairs,
+    )
 
 
 def compute_entropies_for_all_scales(
-    km_coeffs, incs_for_all_scales_iterator, indep_scales, scale_subsample_step_us
+    km_coeffs: KMCoeffs,
+    incs_for_all_scales: np.ndarray,
+    indep_scales: np.ndarray,
+    scale_subsample_step_us: int,
+    indep_scales_idxs: np.ndarray,
+    traj_start_pairs: np.ndarray,  # (N, 2) -> (traj_idx, start_time)
 ):
-    medium_entropy_l, system_entropy_l, total_entropy_l = [], [], []
-    idx_track_l = []
-    for incs_for_all_scales, incs_for_all_scales_idx in incs_for_all_scales_iterator:
-        # Independent increments for scales separated by (probably) one markovian step
+    """
+    Compute entropies on the full set of increments and build index tracking.
 
-        sampled_scales = indep_scales[::scale_subsample_step_us]
-        sampled_incs = incs_for_all_scales[:, ::scale_subsample_step_us]
+    Returns
+    -------
+    medium_entropy : ndarray, shape (N, n_steps)
+    system_entropy : ndarray, shape (N, n_steps)
+    total_entropy : ndarray, shape (N, n_steps)
+    idx_track : ndarray, shape (N, n_steps, 3, 2) with pairs (traj_idx, time_idx)
+    """
+    # Precompute sampled/central columns on the full indep_scales grid
+    full_cols = np.arange(indep_scales.size)
+    sampled_cols = full_cols[::scale_subsample_step_us]
+    central_cols = sampled_cols[1:-1]  # matches incs_central columns
 
-        # Midpoint derivative (and properly evaluated incs and scales in those points)
-        scales_central, scale_spacing_central, incs_central, incs_deriv_central = (
-            compute_central_derivative(sampled_incs, sampled_scales)
-        )
+    # Subsample increments
+    sampled_scales = indep_scales[::scale_subsample_step_us]
+    sampled_incs = incs_for_all_scales[:, ::scale_subsample_step_us]
 
-        # Entropy
-        medium_entropy = compute_medium_entropy(
-            incs_deriv_central,
-            incs_central,
-            scales_central,
-            scale_spacing_central,
-            km_coeffs,
-        )
+    # Midpoint derivative (and properly evaluated incs and scales in those points)
+    scales_central, scale_spacing_central, incs_central, incs_deriv_central = (
+        compute_central_derivative(sampled_incs, sampled_scales)
+    )
 
-        system_entropy = compute_system_entropy(incs_central)
+    # Entropies
+    medium_entropy = compute_medium_entropy(
+        incs_deriv_central,
+        incs_central,
+        scales_central,
+        scale_spacing_central,
+        km_coeffs,
+    )
+    system_entropy = compute_system_entropy(incs_central)
 
-        total_entropy = medium_entropy + system_entropy
-        total_entropy[~np.isfinite(total_entropy)] = np.nan
+    total_entropy = medium_entropy + system_entropy
+    total_entropy[~np.isfinite(total_entropy)] = np.nan
 
-        medium_entropy_l.append(medium_entropy)
-        system_entropy_l.append(system_entropy)
-        total_entropy_l.append(total_entropy)
-
-        idx_track_l.append(incs_for_all_scales_idx)
-
-    medium_entropy = np.concatenate(medium_entropy_l)
-    system_entropy = np.concatenate(system_entropy_l)
-    total_entropy = np.concatenate(total_entropy_l)
-
-    idx_track = np.concatenate(idx_track_l, axis=0)
+    idx_track = _build_index_track(
+        traj_start_pairs=traj_start_pairs,
+        indep_scales_idxs=indep_scales_idxs,
+        central_scale_column_indices=central_cols,
+    )
 
     return medium_entropy, system_entropy, total_entropy, idx_track
 
 
 def get_non_overlap_idep_incs(
-    data: np.ndarray,
+    data: np.ma.MaskedArray,
     indep_scales_idxs: np.ndarray,
     trajectory_chunk_length: int,
-    available_ram_gb: float,
 ):
-    orig_shape = data.shape
-    flat_idx = np.flatnonzero(~data.mask.ravel())
-    data = data.compressed()  # TODO: Generalize this to data with other shapes
+    """
+    Build non-overlapping increments.
 
-    data_len = len(data)
+    Returns
+    -------
+    incs_all : ndarray, shape (n_casc_trajs, n_full_scales)
+        Increments for every cascade trajectory across the full independent scale grid.
+    traj_start_pairs : ndarray, shape (n_casc_trajs, 2)
+        (row_index, start_time_index) for each cascade trajectory.
+    """
+
+    mask = np.ma.getmaskarray(data)
+    n_trajs, n_times = data.shape
+    valid_len = n_times - mask.sum(axis=1)
+
     step_size = trajectory_chunk_length + 1
-    starts = np.arange(0, data_len, step_size)
+    max_offset = int(indep_scales_idxs[0])
 
-    valid_1 = (starts + indep_scales_idxs[0]) < data_len
-    valid_2 = (starts + indep_scales_idxs[-1]) < data_len
-    valid_starts = starts[valid_1 & valid_2]
+    incs_list = []
+    starts_list = []
 
-    max_chunk_size = _compute_max_chunk_size(
-        available_ram_gb, n_scales=len(indep_scales_idxs)
-    )
-    if max_chunk_size < 1:
-        raise MemoryError("Not enough RAM available for even one trajectory chunk.")
+    for r in range(n_trajs):
+        n_avail = int(valid_len[r])
+        if n_avail <= max_offset:
+            continue
 
-    for i in range(0, len(starts), max_chunk_size):
-        chunk_starts = valid_starts[i : i + max_chunk_size]
-        chunk_incs = (
-            data[chunk_starts[:, None] + indep_scales_idxs] - data[chunk_starts, None]
+        # Non-overlapping starts. Tail is discarded.
+        limit = n_avail - max_offset
+        starts = np.arange(0, limit, step_size, dtype=int)
+
+        if starts.size == 0:
+            continue
+
+        # Build increments for row r
+        # Shape: (n_starts, n_full_scales)
+        row_vals = data[r].filled(np.nan)  # valid prefix has real data; mask is tail
+        incs_r = (
+            row_vals[starts[:, None] + indep_scales_idxs[None, :]]
+            - row_vals[starts, None]
         )
-        chunk_coords = np.stack(
-            np.unravel_index(flat_idx[chunk_starts], orig_shape), axis=1
-        )
-        yield chunk_incs, chunk_coords
 
+        incs_list.append(incs_r)
+        # start pairs (traj_idx, time_idx) for each start
+        starts_r = np.column_stack([np.full(starts.size, r, dtype=int), starts])
+        starts_list.append(starts_r)
 
-def get_overlap_incs(
-    data: np.ndarray,
-    indep_scales_idxs: np.ndarray,
-    trajectory_chunk_length: int,
-    available_ram_gb: float,
-):
-    # TODO: Generalize this to data with other shapes
-    data = data.compressed()
+    if len(incs_list) == 0:
+        # No valid cascades
+        n_full_scales = indep_scales_idxs.size
+        return np.empty((0, n_full_scales), dtype=float), np.empty((0, 2), dtype=int)
 
-    data_len = len(data)
+    incs_all = np.vstack(incs_list)
+    traj_start_pairs = np.vstack(starts_list)
 
-    # For overlapping trajectories, use a step of 1
-    starts = np.arange(0, data_len - trajectory_chunk_length)
-
-    max_chunk_size = _compute_max_chunk_size(
-        available_ram_gb, n_scales=len(indep_scales_idxs)
-    )
-
-    if max_chunk_size < 1:
-        raise MemoryError("Not enough RAM available for even one trajectory chunk.")
-
-    for i in tqdm(range(0, len(starts), max_chunk_size)):
-        chunk_starts = starts[i : i + max_chunk_size]
-        chunk_incs = (
-            data[chunk_starts[:, None] + indep_scales_idxs] - data[chunk_starts, None]
-        )
-        yield chunk_incs
+    return incs_all, traj_start_pairs
 
 
 def compute_central_derivative(sampled_incs: np.ndarray, sampled_scales: np.ndarray):
@@ -313,16 +237,16 @@ def compute_medium_entropy(
     incs_central: np.ndarray,
     scales_central: np.ndarray,
     delta_scales: np.ndarray,
-    km_coeffs: dict,
+    km_coeffs: KMCoeffs,
 ):
     D1 = _D1(incs_central, scales_central, km_coeffs)
     D2 = _D2(incs_central, scales_central, km_coeffs)
     D2_derivative = _D2_diff(incs_central, scales_central, km_coeffs)
     F = D1 - (D2_derivative / 2.0)
     FD = F / D2
-    Sm_tmp = incs_deriv_central * FD * delta_scales
-    Sm_1 = np.nansum(Sm_tmp, axis=1)
-    return Sm_1
+    ent_steps = incs_deriv_central * FD * delta_scales
+    ent = np.nansum(ent_steps, axis=1)
+    return ent
 
 
 def compute_system_entropy(incs_central):
@@ -367,45 +291,81 @@ def compute_system_entropy(incs_central):
     return system_entropy
 
 
-def compute_path_integral(
+def compute_medium_entropy_dense(
     incs_deriv_central: np.ndarray,
     incs_central: np.ndarray,
     scales_central: np.ndarray,
     delta_scales: np.ndarray,
-    km_coeffs: dict,
+    km_coeffs: KMCoeffs,
 ):
     D1 = _D1(incs_central, scales_central, km_coeffs)
     D2 = _D2(incs_central, scales_central, km_coeffs)
-    D1_derivative = _D1_diff(incs_central, scales_central, km_coeffs)
     D2_derivative = _D2_diff(incs_central, scales_central, km_coeffs)
-    D2_second_derivative = _D2_diff_diff(incs_central, scales_central, km_coeffs)
-    lagrangian = (
-        ((incs_deriv_central - D1 + (D2_derivative / 2.0)) ** 2) / (4.0 * D2)
-    ) - (D1_derivative / 2.0)
-    action = np.nansum(lagrangian * delta_scales, axis=1)
-    momentum = (incs_deriv_central - D1 + (D2_derivative / 2.0)) / (2.0 * D2)
-    hamiltonian = (
-        D2 * momentum**2
-        + (D1 - (D2_derivative / 2.0)) * momentum
-        - (D1_derivative / 2.0)
-    )
-    hamiltonian_derivative1 = (2.0 * D2 * momentum) + D1 - (D2_derivative / 2.0)
-    hamiltonian_derivative2 = -(
-        (momentum**2 * D2_derivative)
-        + (D1_derivative - (D2_second_derivative / 2.0)) * momentum
-        - (D1_derivative / 2.0)
-    )
-    hamiltonian_derivative2 = -hamiltonian_derivative2
-    # tmpvar = np.cumsum(lagrangian * delta_scales, axis=1)
-    # return lagrangian, action, momentum, hamiltonian, tmpvar, hamiltonian_derivative1, hamiltonian_derivative2
-    return (
-        lagrangian,
-        action,
-        momentum,
-        hamiltonian,
-        hamiltonian_derivative1,
-        hamiltonian_derivative2,
-    )
+    F = D1 - (D2_derivative / 2.0)
+    FD = F / D2
+    ent_steps = incs_deriv_central * FD * delta_scales
+    ent_steps[:, 0] *= 2
+    ent_steps[:, -1] *= 2
+    return 0.5 * (ent_steps[:, :-1] + ent_steps[:, 1:])
+
+
+def compute_system_entropy_dense(incs_central):
+    nbins = 301
+    # Build common bins from the largest scale (col 0)
+    ref = incs_central[:, 0]
+    ref = ref[~np.isnan(ref)]
+    _, bin_edges = np.histogram(ref, bins=nbins, density=True)
+    bin_centers = 0.5 * (bin_edges[:-1] + bin_edges[1:])
+
+    # PDFs for all scales on the same bins
+    n_scales = incs_central.shape[1]
+    pdfs = np.empty((n_scales, bin_centers.size))
+    valids = np.empty_like(pdfs, dtype=bool)
+    for k in range(n_scales):
+        x = incs_central[:, k]
+        x = x[~np.isnan(x)]
+        pdfs[k], _ = np.histogram(x, bins=bin_edges, density=True)
+        valids[k] = pdfs[k] > 0
+
+    # Stepwise entropies: -log p_{k+1}(x_{i,k+1}) / p_k(x_{i,k})
+    N = incs_central.shape[0]
+    ent_steps = np.full((N, n_scales - 1), np.nan)
+
+    for i in range(N):
+        for k in range(n_scales - 1):
+            # denom: p_k at x_{i,k}
+            denom = (
+                np.interp(
+                    incs_central[i, k],
+                    bin_centers[valids[k]],
+                    pdfs[k][valids[k]],
+                    left=np.nan,
+                    right=np.nan,
+                )
+                if np.any(valids[k])
+                else np.nan
+            )
+
+            # num: p_{k+1} at x_{i,k+1}
+            num = (
+                np.interp(
+                    incs_central[i, k + 1],
+                    bin_centers[valids[k + 1]],
+                    pdfs[k + 1][valids[k + 1]],
+                    left=np.nan,
+                    right=np.nan,
+                )
+                if np.any(valids[k + 1])
+                else np.nan
+            )
+
+            ent_steps[i, k] = (
+                -np.log(num / denom)
+                if np.isfinite(num) and np.isfinite(denom)
+                else np.nan
+            )
+
+    return ent_steps
 
 
 def _D1(incs: np.ndarray, scales: np.ndarray, kmcoeffs: KMCoeffs) -> np.ndarray:
@@ -458,11 +418,53 @@ def _D2_diff_diff(_: np.ndarray, scales: np.ndarray, kmcoeffs: KMCoeffs) -> np.n
     return D2_dd
 
 
-def _compute_max_chunk_size(available_ram_gb, n_scales):
-    available_ram_bytes = available_ram_gb * 1.07e9
-    bytes_per_value = 8  # assuming float64
+def _build_index_track(
+    traj_start_pairs: np.ndarray,
+    indep_scales_idxs: np.ndarray,
+    central_scale_column_indices: np.ndarray,
+) -> np.ndarray:
+    """
+    Build index-tracking triplets [trajectory_start, scale_k, scale_kp1],
+    each as (traj_idx, time_idx) pairs for every step between adjacent central scales.
 
-    max_chunk_size = int(np.floor(available_ram_bytes / (n_scales * bytes_per_value)))
-    max_chunk_size = max_chunk_size // 5  # need for temporal allocations
+    Parameters
+    ----------
+    traj_start_pairs : (N, 2)
+        (traj_idx, start_time_idx) for each cascade trajectory.
+    indep_scales_idxs : (n_full_scales,)
+        Absolute offsets on the full independent scale grid (descending).
+    central_scale_column_indices : (n_central_cols,)
+        Column indices on the full scale grid used for central differences.
 
-    return max_chunk_size
+    Returns
+    -------
+    idx_track : (N, n_steps, 3, 2)
+        Triplets [trajectory_start, scale_k, scale_kp1].
+    """
+
+    N = traj_start_pairs.shape[0]
+    n_steps = int(central_scale_column_indices.size) - 1
+    if n_steps < 1:
+        return np.empty((N, 0, 3, 2), dtype=int)
+
+    traj_indices = traj_start_pairs[:, 0]
+    start_times = traj_start_pairs[:, 1]
+
+    i_offsets = indep_scales_idxs[central_scale_column_indices[:-1]]
+    i_plus_1_offsets = indep_scales_idxs[central_scale_column_indices[1:]]
+
+    i_times = start_times[:, None] + i_offsets[None, :]
+    i_plus_1_times = start_times[:, None] + i_plus_1_offsets[None, :]
+
+    traj_indices_rep = np.repeat(traj_indices[:, None], n_steps, axis=1)
+
+    trajectory_start = np.repeat(
+        traj_start_pairs[:, None, :], n_steps, axis=1
+    )  # (N,n_steps,2)
+    scale_k = np.stack([traj_indices_rep, i_times], axis=2).astype(int)  # (N,n_steps,2)
+    scale_kp1 = np.stack([traj_indices_rep, i_plus_1_times], axis=2).astype(int)
+
+    idx_track = np.stack(
+        [trajectory_start, scale_k, scale_kp1], axis=2
+    )  # (N,n_steps,3,2)
+    return idx_track
