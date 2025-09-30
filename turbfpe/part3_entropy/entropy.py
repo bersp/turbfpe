@@ -195,7 +195,6 @@ def compute_km_coeffs_dft_opti_params(data, params):
     scale_subsample_step_us = params.read("p3.general.scale_subsample_step_us")
     taylor_scale = params.read("general.taylor_scale")
     taylor_hyp_vel = params.read("general.taylor_hyp_vel")
-    available_ram_gb = params.read("p3.general.available_ram_gb")
 
     km_coeffs_dft_opti, _ = compute_km_coeffs_dft_opti(
         data=data,
@@ -210,7 +209,6 @@ def compute_km_coeffs_dft_opti_params(data, params):
         scale_subsample_step_us=scale_subsample_step_us,
         taylor_scale=taylor_scale,
         taylor_hyp_vel=taylor_hyp_vel,
-        available_ram_gb=available_ram_gb,
     )
 
     km_coeffs_dft_opti.write_npz(
