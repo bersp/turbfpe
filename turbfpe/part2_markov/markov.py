@@ -25,9 +25,9 @@ from .wilcoxon_test import compute_wilcoxon_test, plot_wilcoxon_test
 
 
 def exec_routine(params_file):
-    params = Params(params_file)
+    params = Params(filename=params_file)
 
-    mpl_setup(params)
+    mpl_setup(params=params)
 
     data = params.load_data()
 
@@ -36,7 +36,7 @@ def exec_routine(params_file):
         logger.info(f"----- START {func_str} (PART 2)")
 
         func = globals()[f"{func_str}_params"]
-        func(data, params)
+        func(data=data, params=params)
 
         logger.info(f"----- END {func_str} (PART 2)")
         logger.info("-" * 80)
@@ -85,7 +85,13 @@ def compute_wilcoxon_test_params(data, params):
     n_interv_sec = params.read("p2.compute_wilcoxon_test.n_interv_sec")
 
     delta_arr, wt_arr = compute_wilcoxon_test(
-        data, fs, nbins, taylor_hyp_vel, indep_scale, end_scale, n_interv_sec
+        data=data,
+        fs=fs,
+        nbins=nbins,
+        taylor_hyp_vel=taylor_hyp_vel,
+        indep_scale=indep_scale,
+        end_scale=end_scale,
+        n_interv_sec=n_interv_sec,
     )
 
     np.save(
@@ -101,7 +107,12 @@ def plot_wilcoxon_test_params(data, params):
         params.format_output_filename_for_data("wilcoxon_test.npy")
     )
 
-    out = plot_wilcoxon_test(data, delta_arr, wt_arr, markov_scale_us)
+    out = plot_wilcoxon_test(
+        data=data,
+        delta_arr_us=delta_arr,
+        wt_arr=wt_arr,
+        markov_scale_us=markov_scale_us,
+    )
 
     if params.read("config.mpl.save_figures"):
         save_fig(params.format_output_filename_for_figures("p2_wilcoxon_test.pdf"))
@@ -127,16 +138,16 @@ def compute_conditional_moments_estimation_params(data, params):
     taylor_hyp_vel = params.read("general.taylor_hyp_vel")
 
     cond_moments_group, density_funcs_group = compute_conditional_moments_estimation(
-        data,
-        fs,
-        highest_freq,
-        markov_scale_us,
-        nbins,
-        min_events,
-        int_scale,
-        taylor_scale,
-        n_scale_steps,
-        taylor_hyp_vel,
+        data=data,
+        fs=fs,
+        highest_freq=highest_freq,
+        markov_scale_us=markov_scale_us,
+        nbins=nbins,
+        min_events=min_events,
+        int_scale=int_scale,
+        taylor_scale=taylor_scale,
+        n_scale_steps=n_scale_steps,
+        taylor_hyp_vel=taylor_hyp_vel,
     )
 
     cond_moments_group.write_npz(
@@ -165,14 +176,14 @@ def compute_km_coeffs_estimation_params(_, params):
     taylor_hyp_vel = params.read("general.taylor_hyp_vel")
 
     km_coeffs_est_group = compute_km_coeffs_estimation(
-        cond_moments_group,
-        density_funcs_group,
-        fs,
-        markov_scale_us,
-        nbins,
-        min_events,
-        taylor_scale,
-        taylor_hyp_vel,
+        cond_moments_group=cond_moments_group,
+        density_funcs_group=density_funcs_group,
+        fs=fs,
+        markov_scale_us=markov_scale_us,
+        nbins=nbins,
+        min_events=min_events,
+        taylor_scale=taylor_scale,
+        taylor_hyp_vel=taylor_hyp_vel,
     )
 
     km_coeffs_est_group.write_npz(
@@ -191,10 +202,16 @@ def plot_km_coeffs_estimation_params(_, params):
 
     taylor_scale = params.read("general.taylor_scale")
 
-    out = plot_km_coeffs_estimation(km_coeffs_est_group, density_funcs_group, taylor_scale)
+    out = plot_km_coeffs_estimation(
+        km_coeffs_est_group=km_coeffs_est_group,
+        density_funcs_group=density_funcs_group,
+        taylor_scale=taylor_scale,
+    )
 
     if params.read("config.mpl.save_figures"):
-        save_fig(params.format_output_filename_for_figures("p2_km_coeffs_estimation.pdf"))
+        save_fig(
+            params.format_output_filename_for_figures("p2_km_coeffs_estimation.pdf")
+        )
     if params.read("config.mpl.show_figures"):
         plt.show()
     else:
@@ -215,13 +232,13 @@ def compute_km_coeffs_estimation_stp_opti_params(data, params):
     taylor_hyp_vel = params.read("general.taylor_hyp_vel")
 
     km_coeffs_est_group = compute_km_estimation_stp_opti(
-        data,
-        km_coeffs_est_group,
-        fs,
-        nbins,
-        tol,
-        taylor_scale,
-        taylor_hyp_vel,
+        data=data,
+        km_coeffs_est_group=km_coeffs_est_group,
+        fs=fs,
+        nbins=nbins,
+        tol=tol,
+        taylor_scale=taylor_scale,
+        taylor_hyp_vel=taylor_hyp_vel,
     )
 
     km_coeffs_est_group.write_npz(
@@ -245,17 +262,21 @@ def plot_km_coeffs_estimation_opti_params(_, params):
     taylor_hyp_vel = params.read("general.taylor_hyp_vel")
 
     out = plot_km_coeffs_estimation_opti(
-        km_coeffs_est_group,
-        density_funcs_group,
-        fs,
-        markov_scale_us,
-        nbins,
-        taylor_scale,
-        taylor_hyp_vel,
+        km_coeffs_est_group=km_coeffs_est_group,
+        density_funcs_group=density_funcs_group,
+        fs=fs,
+        markov_scale_us=markov_scale_us,
+        nbins=nbins,
+        taylor_scale=taylor_scale,
+        taylor_hyp_vel=taylor_hyp_vel,
     )
 
     if params.read("config.mpl.save_figures"):
-        save_fig(params.format_output_filename_for_figures("p2_km_coeffs_estimation_opti.pdf"))
+        save_fig(
+            params.format_output_filename_for_figures(
+                "p2_km_coeffs_estimation_opti.pdf"
+            )
+        )
     if params.read("config.mpl.show_figures"):
         plt.show()
     else:
@@ -277,7 +298,10 @@ def compute_km_coeffs_fit_params(_, params):
     taylor_scale = params.read("general.taylor_scale")
 
     km_coeffs, km_coeffs_no_opti = compute_km_coeffs_fit(
-        density_funcs_group, km_coeffs_est_group, nbins, taylor_scale
+        density_funcs_group=density_funcs_group,
+        km_coeffs_est_group=km_coeffs_est_group,
+        nbins=nbins,
+        taylor_scale=taylor_scale,
     )
 
     km_coeffs.write_npz(
@@ -305,11 +329,11 @@ def plot_km_coeffs_fit_params(_, params):
     taylor_scale = params.read("general.taylor_scale")
 
     out = plot_km_coeffs_fit(
-        km_coeffs,
-        density_funcs_group,
-        km_coeffs_est_group,
-        nbins,
-        taylor_scale,
+        km_coeffs=km_coeffs,
+        density_funcs_group=density_funcs_group,
+        km_coeffs_est_group=km_coeffs_est_group,
+        nbins=nbins,
+        taylor_scale=taylor_scale,
     )
 
     if params.read("config.mpl.save_figures"):

@@ -7,7 +7,7 @@ from .preanalysis_functions import compute_int_scale
 
 
 def exec_routine(params_file):
-    params = Params(params_file)
+    params = Params(filename=params_file)
     data = params.load_data(flat=False, ignore_opts=True)
     params.write("data.shape", data.shape)
     data = data.compressed()
@@ -17,7 +17,7 @@ def exec_routine(params_file):
         logger.info(f"----- START {func_str} (PART 0)")
 
         func = globals()[f"{func_str}_params"]
-        func(data, params)
+        func(data=data, params=params)
 
         logger.info(f"----- END {func_str} (PART 0)")
         logger.info("-" * 80)
@@ -26,7 +26,7 @@ def exec_routine(params_file):
 def compute_int_scale_params(data, params: Params):
     fs = params.read("general.fs")
     taylor_hyp_vel = params.read("general.taylor_hyp_vel")
-    return compute_int_scale(data, fs, taylor_hyp_vel)
+    return compute_int_scale(data=data, fs=fs, taylor_hyp_vel=taylor_hyp_vel)
 
 
 def compute_and_write_data_stats_params(data, params: Params):
@@ -53,5 +53,5 @@ def compute_and_write_general_autovalues_params(data, params: Params):
         params.write("general.nbins", tmp)
 
     if params.is_auto("general.int_scale"):
-        int_scale = compute_int_scale_params(data, params)
+        int_scale = compute_int_scale_params(data=data, params=params)
         params.write("general.int_scale", int_scale)

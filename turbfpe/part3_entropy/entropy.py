@@ -16,9 +16,9 @@ from .plot_functions import plot_entropy
 
 
 def exec_routine(params_file):
-    params = Params(params_file)
+    params = Params(filename=params_file)
 
-    mpl_setup(params)
+    mpl_setup(params=params)
 
     data = params.load_data()
 
@@ -27,7 +27,7 @@ def exec_routine(params_file):
         logger.info(f"----- START {func_str} (PART 3)")
 
         func = globals()[f"{func_str}_params"]
-        func(data, params)
+        func(data=data, params=params)
 
         logger.info(f"----- END {func_str} (PART 3)")
         logger.info("-" * 80)
@@ -51,15 +51,15 @@ def compute_entropy_autovalues_params(_, params):
 
 
 def compute_entropy_stp_opti_params(data, params):
-    _compute_entropy_params(data, params, opti_type="stp")
+    _compute_entropy_params(data=data, params=params, opti_type="stp")
 
 
 def compute_entropy_ift_opti_params(data, params):
-    _compute_entropy_params(data, params, opti_type="ift")
+    _compute_entropy_params(data=data, params=params, opti_type="ift")
 
 
 def compute_entropy_dft_opti_params(data, params):
-    _compute_entropy_params(data, params, opti_type="dft")
+    _compute_entropy_params(data=data, params=params, opti_type="dft")
 
 
 def _compute_entropy_params(data, params, opti_type):
@@ -75,14 +75,14 @@ def _compute_entropy_params(data, params, opti_type):
     taylor_hyp_vel = params.read("general.taylor_hyp_vel")
 
     entropies = compute_entropy(
-        data,
-        km_coeffs,
-        fs,
-        smallest_scale,
-        largest_scale,
-        scale_subsample_step_us,
-        taylor_scale,
-        taylor_hyp_vel,
+        data=data,
+        km_coeffs=km_coeffs,
+        fs=fs,
+        smallest_scale=smallest_scale,
+        largest_scale=largest_scale,
+        scale_subsample_step_us=scale_subsample_step_us,
+        taylor_scale=taylor_scale,
+        taylor_hyp_vel=taylor_hyp_vel,
     )
 
     entropies.write_npz(
@@ -103,14 +103,14 @@ def compute_entropy_w_steps_params(data, params):
     taylor_hyp_vel = params.read("general.taylor_hyp_vel")
 
     entropies = compute_entropy(
-        data,
-        km_coeffs,
-        fs,
-        smallest_scale,
-        largest_scale,
-        scale_subsample_step_us,
-        taylor_scale,
-        taylor_hyp_vel,
+        data=data,
+        km_coeffs=km_coeffs,
+        fs=fs,
+        smallest_scale=smallest_scale,
+        largest_scale=largest_scale,
+        scale_subsample_step_us=scale_subsample_step_us,
+        taylor_scale=taylor_scale,
+        taylor_hyp_vel=taylor_hyp_vel,
         compute_entropy_steps=True,
     )
 
@@ -124,7 +124,7 @@ def compute_entropy_w_steps_params(data, params):
 
 def compute_km_coeffs_ift_opti_params(data, params):
     prop_to_use = params.read("p3.general.prop_to_use")
-    data = trim_data(data, prop_to_use)
+    data = trim_data(data=data, prop_to_use=prop_to_use)
     if not np.all(np.array(prop_to_use) == 1.0):
         logger.info(f"Trimmed data. The new shape is {data.shape}")
 
@@ -150,18 +150,18 @@ def compute_km_coeffs_ift_opti_params(data, params):
     taylor_hyp_vel = params.read("general.taylor_hyp_vel")
 
     km_coeffs_ift_opti, _ = compute_km_coeffs_ift_opti(
-        data,
-        km_coeffs_stp_opti,
-        scales_for_optimization,
-        tol_D1,
-        tol_D2,
-        iter_max,
-        fs,
-        smallest_scale,
-        largest_scale,
-        scale_subsample_step_us,
-        taylor_scale,
-        taylor_hyp_vel,
+        data=data,
+        km_coeffs_stp_opti=km_coeffs_stp_opti,
+        scales_for_optimization=scales_for_optimization,
+        tol_D1=tol_D1,
+        tol_D2=tol_D2,
+        iter_max=iter_max,
+        fs=fs,
+        smallest_scale=smallest_scale,
+        largest_scale=largest_scale,
+        scale_subsample_step_us=scale_subsample_step_us,
+        taylor_scale=taylor_scale,
+        taylor_hyp_vel=taylor_hyp_vel,
     )
 
     km_coeffs_ift_opti.write_npz(
@@ -171,7 +171,7 @@ def compute_km_coeffs_ift_opti_params(data, params):
 
 def compute_km_coeffs_dft_opti_params(data, params):
     prop_to_use = params.read("p3.general.prop_to_use")
-    data = trim_data(data, prop_to_use)
+    data = trim_data(data=data, prop_to_use=prop_to_use)
     if not np.all(np.array(prop_to_use) == 1.0):
         logger.info(f"Trimmed data. The new shape is {data.shape}")
 
@@ -198,19 +198,19 @@ def compute_km_coeffs_dft_opti_params(data, params):
     available_ram_gb = params.read("p3.general.available_ram_gb")
 
     km_coeffs_dft_opti, _ = compute_km_coeffs_dft_opti(
-        data,
-        km_coeffs_stp_opti,
-        scales_for_optimization,
-        tol_D1,
-        tol_D2,
-        iter_max,
-        fs,
-        smallest_scale,
-        largest_scale,
-        scale_subsample_step_us,
-        taylor_scale,
-        taylor_hyp_vel,
-        available_ram_gb,
+        data=data,
+        km_coeffs_stp_opti=km_coeffs_stp_opti,
+        scales_for_optimization=scales_for_optimization,
+        tol_D1=tol_D1,
+        tol_D2=tol_D2,
+        iter_max=iter_max,
+        fs=fs,
+        smallest_scale=smallest_scale,
+        largest_scale=largest_scale,
+        scale_subsample_step_us=scale_subsample_step_us,
+        taylor_scale=taylor_scale,
+        taylor_hyp_vel=taylor_hyp_vel,
+        available_ram_gb=available_ram_gb,
     )
 
     km_coeffs_dft_opti.write_npz(
@@ -235,11 +235,11 @@ def plot_entropy_dft_opti_params(_, params):
 
 def _plot_entropy_params(_, params, opti_type):
     entropies = Entropies.load_npz(
-        params.format_output_filename_for_data(f"entropies_{opti_type}_opti.npz")  #
+        params.format_output_filename_for_data(f"entropies_{opti_type}_opti.npz")
     )
     nbins = params.read(f"p3.plot_entropy_{opti_type}_opti.nbins")
 
-    out = plot_entropy(entropies, nbins)
+    out = plot_entropy(entropies=entropies, nbins=nbins)
 
     if params.read("config.mpl.save_figures"):
         save_fig(
