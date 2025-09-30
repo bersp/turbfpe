@@ -10,13 +10,13 @@ A. Fuchs *et al.*, “An open source package to perform basic and advanced stati
 - [Installation](#installation)
 - [Usage](#usage)
 - [Documentation](#documentation)
-    - [Routine flow](#routine-flow)
-    - [Configuration parameters](#general-parameters)
+    - [Routine flow](#routine-flow-and-paramstoml)
+    - [Configuration parameters](#configuration-parameters)
     - [General parameters](#general-parameters)
     - [Routine parameters](#routine-parameters)
-       * [Part 1 — Turbulence-analysis](#part1)
-       * [Part 2 — Markov](#part2)
-       * [Part 3 — Entropy production](#part3)
+        * [Part 1 — Turbulence-analysis](#part1)
+        * [Part 2 — Markov](#part2)
+        * [Part 3 — Entropy production](#part3)
 
 # Installation
 ```sh
@@ -84,7 +84,7 @@ By design, **the routine section organizes the workflow** into four ordered bloc
 
 > The *general* `auto` values are computed during the pre-analysis step by **`p0.compute_and_write_general_autovalues`**.
 
-> `auto` values specific to each routine section are calculated by that section’s helper function (e.g. the Markov-related `auto` parameters are set in **`p3.compute_markov_autovalues`**).
+> `auto` values specific to each routine section are calculated by that section’s helper function (e.g. the Markov-related `auto` parameters are set in **`p2.compute_markov_autovalues`**).
 
 
 ## Routine parameters
@@ -116,7 +116,7 @@ Plot both the raw spectrum $E(f)$ and the compensated spectrum $E(f)f^{p}$.
 ###  Part 2 — Markov <a name="part2"></a>
 #### General
 - `p2.general.markov_scale_us` — int or `"auto"` (=$`\lambda\,f_s/U`$). Sample units.
-- `nbins` — int or `"auto"`(=`general.nbins`). Default histogram bin count for all Part 2 PDFs.
+- `p2.general.nbins` — int or `"auto"` (=`general.nbins`). Default histogram bin count for all Part 2 PDFs.
 - `p2.general.min_events` — int. Minimum per-bin count tolerable.
 
 #### `compute_wilcoxon_test`
@@ -191,12 +191,10 @@ Display the fitted $D^{(1)}$ and $D^{(2)}$ surfaces together with the scatter of
 ### Part 3 — Entropy production <a name="part3"></a>
 
 #### General
-- `p3.general.prop_to_use` — either a float float [0 – 1] (for 1-D data) or a two-floats list `[[0 – 1], [0 – 1]]` (for 2-D data). Specifies the fraction(s) of the **already-loaded** dataset.
+- `p3.general.prop_to_use` — either a float [0 – 1] (for 1-D data) or a two-float list `[[0 – 1], [0 – 1]]` (for 2-D data). Specifies the fraction(s) of the **already-loaded** dataset.
 - `p3.general.smallest_scale` — float or `"auto"` (= `general.taylor_scale`). Minimum cascade scale $s_{\min}$. Physical units.
 - `p3.general.largest_scale` — float or `"auto"` (= `general.int_scale`). Maximum cascade scale $s_{\max}$. Physical units.
 - `p3.general.scale_subsample_step_us` — int or `"auto"` (= `p2.general.markov_scale_us`). Sub-sampling step between scales. Sample units.
-- `p3.general.overlap_trajs_flag` — bool. Enable (`true`) or disable (`false`) overlapping trajectories.
-- `p3.general.available_ram_gb` — float. Available RAM for chunking (GB).
 
 #### `compute_km_coeffs_(ift|dft)_opti`
 Refine the short-time–propagator coefficients so that they also satisfy the **integral fluctuation theorem (IFT)** or the **detailed fluctuation theorem (dft)**; the resulting set is saved to `km_coeffs_(ift|dft)_opti.npz`.
@@ -205,12 +203,10 @@ It uses `km_coeffs_stp_opti.npz` for the initial coefficients and `km_coeffs_est
 
 - `tol_D1` — float [0 – 1]. Relative search window for each $d_{11}(s)$ value.
 - `tol_D2` — float [0 – 1]. Relative search window for each $d_{2j}(s)$ value.
-- `iter_max` — int. Maximum L-BFGS-B iterations. The algorithm is very efficient finding the minimum but the general optimization is slow, so ~ 5 is a good number to start.
+- `iter_max` — int. Maximum L-BFGS-B iterations. The algorithm is very efficient at finding the minimum but the global optimisation is slow, so ~5 is a good number to start with.
 - `p3.general.smallest_scale` — Minimum cascade scale $s_{\min}$.
 - `p3.general.largest_scale` — Maximum cascade scale $s_{\max}$.
 - `p3.general.scale_subsample_step_us` — Sub-sampling step between scales.
-- `p3.general.overlap_trajs_flag` — Whatever use or not overlapping trajectories.
-- `p3.general.available_ram_gb` — Available RAM for chunking (GB). 
 - `general.taylor_scale` — Normalises the scales before doing the optimization.
 - `general.fs`, `general.taylor_hyp_vel` — Converts physical units to sample units.
 
@@ -221,10 +217,13 @@ Compute the medium, system and total entropy along the cascade using the (**shor
 - `p3.general.smallest_scale` — Minimum cascade scale $s_{\min}$.
 - `p3.general.largest_scale` — Maximum cascade scale $s_{\max}$.
 - `p3.general.scale_subsample_step_us` — Sub-sampling step between scales.
-- `p3.general.overlap_trajs_flag` — Whatever use or not overlapping trajectories.
-- `p3.general.available_ram_gb` — Available RAM for chunking (GB). 
-
+- `general.taylor_scale`, `general.fs`, `general.taylor_hyp_vel` — Provide the physical-to-sample conversion needed by the cascade integrals.
 #### `plot_entropy_(ift|stp|dft)_opti`
 Plot the PDFs of medium, system and total entropy, using the data from `entropies_(stp|ift|dft)_opti.npz`. Check the integral fluctuation theorem (IFT) and the detailed fluctuation theorem (DFT).
 
 - `nbins` — int. Histogram bins for the entropy PDFs and DFT plot.
+
+
+#### `compute_entropy_w_steps`
+Same as `compute_entropy_ift_opti`, but also stores the cumulative contributions per cascade step; results are saved to `entropies_ift_opti_w_steps.npz`.
+
