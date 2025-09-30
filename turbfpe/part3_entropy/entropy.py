@@ -49,6 +49,7 @@ def compute_entropy_autovalues_params(_, params):
 
 # Compute entropy
 
+
 def compute_entropy_stp_opti_params(data, params):
     _compute_entropy_params(data, params, opti_type="stp")
 
@@ -89,7 +90,37 @@ def _compute_entropy_params(data, params, opti_type):
     )
 
 
+def compute_entropy_w_steps_params(data, params):
+    km_coeffs = KMCoeffs.load_npz(
+        params.format_output_filename_for_data("km_coeffs_ift_opti.npz")
+    )
+
+    fs = params.read("general.fs")
+    smallest_scale = params.read("p3.general.smallest_scale")
+    largest_scale = params.read("p3.general.largest_scale")
+    scale_subsample_step_us = params.read("p3.general.scale_subsample_step_us")
+    taylor_scale = params.read("general.taylor_scale")
+    taylor_hyp_vel = params.read("general.taylor_hyp_vel")
+
+    entropies = compute_entropy(
+        data,
+        km_coeffs,
+        fs,
+        smallest_scale,
+        largest_scale,
+        scale_subsample_step_us,
+        taylor_scale,
+        taylor_hyp_vel,
+        compute_entropy_steps=True,
+    )
+
+    entropies.write_npz(
+        params.format_output_filename_for_data("entropies_ift_opti_w_steps.npz")
+    )
+
+
 # KM coeffs optimization
+
 
 def compute_km_coeffs_ift_opti_params(data, params):
     prop_to_use = params.read("p3.general.prop_to_use")
@@ -188,6 +219,7 @@ def compute_km_coeffs_dft_opti_params(data, params):
 
 
 # Plot functions
+
 
 def plot_entropy_stp_opti_params(_, params):
     _plot_entropy_params(_, params, opti_type="stp")

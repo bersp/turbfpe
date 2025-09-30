@@ -12,6 +12,7 @@ def compute_entropy(
     scale_subsample_step_us,
     taylor_scale,
     taylor_hyp_vel,
+    compute_entropy_steps=False,
     return_raw_arrays=False,
 ):
     (
@@ -38,6 +39,7 @@ def compute_entropy(
             scale_subsample_step_us=scale_subsample_step_us,
             indep_scales_idxs=indep_scales_idxs,
             traj_start_pairs=traj_start_pairs,
+            compute_entropy_steps=compute_entropy_steps,
         )
     )
     if return_raw_arrays:
@@ -109,6 +111,7 @@ def compute_entropies_for_all_scales(
     scale_subsample_step_us: int,
     indep_scales_idxs: np.ndarray,
     traj_start_pairs: np.ndarray,  # (N, 2) -> (traj_idx, start_time)
+    compute_entropy_steps,
 ):
     """
     Compute entropies on the full set of increments and build index tracking.
@@ -135,23 +138,37 @@ def compute_entropies_for_all_scales(
     )
 
     # Entropies
-    medium_entropy = compute_medium_entropy(
-        incs_deriv_central,
-        incs_central,
-        scales_central,
-        scale_spacing_central,
-        km_coeffs,
-    )
-    system_entropy = compute_system_entropy(incs_central)
+    if compute_entropy_steps:
+        medium_entropy = compute_medium_entropy_w_steps(
+            incs_deriv_central,
+            incs_central,
+            scales_central,
+            scale_spacing_central,
+            km_coeffs,
+        )
+
+        system_entropy = compute_system_entropy_w_steps(incs_central)
+
+        idx_track = _build_index_track(
+            traj_start_pairs=traj_start_pairs,
+            indep_scales_idxs=indep_scales_idxs,
+            central_scale_column_indices=central_cols,
+        )
+    else:
+        medium_entropy = compute_medium_entropy(
+            incs_deriv_central,
+            incs_central,
+            scales_central,
+            scale_spacing_central,
+            km_coeffs,
+        )
+
+        system_entropy = compute_system_entropy(incs_central)
+
+        idx_track = None
 
     total_entropy = medium_entropy + system_entropy
     total_entropy[~np.isfinite(total_entropy)] = np.nan
-
-    idx_track = _build_index_track(
-        traj_start_pairs=traj_start_pairs,
-        indep_scales_idxs=indep_scales_idxs,
-        central_scale_column_indices=central_cols,
-    )
 
     return medium_entropy, system_entropy, total_entropy, idx_track
 
@@ -291,7 +308,7 @@ def compute_system_entropy(incs_central):
     return system_entropy
 
 
-def compute_medium_entropy_dense(
+def compute_medium_entropy_w_steps(
     incs_deriv_central: np.ndarray,
     incs_central: np.ndarray,
     scales_central: np.ndarray,
@@ -309,7 +326,7 @@ def compute_medium_entropy_dense(
     return 0.5 * (ent_steps[:, :-1] + ent_steps[:, 1:])
 
 
-def compute_system_entropy_dense(incs_central):
+def compute_system_entropy_w_steps(incs_central):
     nbins = 301
     # Build common bins from the largest scale (col 0)
     ref = incs_central[:, 0]
