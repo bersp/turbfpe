@@ -165,7 +165,7 @@ def compute_entropies_for_all_scales(
 
         system_entropy = compute_system_entropy(incs_central)
 
-        idx_track = None
+        idx_track = np.array([])
 
     total_entropy = medium_entropy + system_entropy
     total_entropy[~np.isfinite(total_entropy)] = np.nan
@@ -439,7 +439,7 @@ def _build_index_track(
     traj_start_pairs: np.ndarray,
     indep_scales_idxs: np.ndarray,
     central_scale_column_indices: np.ndarray,
-) -> np.ndarray:
+) -> np.ndarray[tuple[int, int, int, int], np.dtype[np.float64]]:
     """
     Build index-tracking triplets [trajectory_start, scale_k, scale_kp1],
     each as (traj_idx, time_idx) pairs for every step between adjacent central scales.
