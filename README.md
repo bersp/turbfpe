@@ -63,12 +63,12 @@ By design, **the routine section organizes the workflow** into four ordered bloc
 - `config.mpl.save_figures` — bool. Write figures to `figures_save_path`.
 
 #### Stats (read-only, filled during pre-analysis)
-- `stats.mean` — float. Record mean.
-- `stats.rms` — float. Root-mean-square value.
-- `stats.std` — float. Standard deviation $\sigma$.
-- `stats.skew` — float. Skewness.
-- `stats.kurtosis` — float. Kurtosis (non-Fisher).
-- `stats.range` — float. Peak-to-peak amplitude.
+- `data.stats.mean` — float. Record mean.
+- `data.stats.rms` — float. Root-mean-square value.
+- `data.stats.std` — float. Standard deviation $\sigma$.
+- `data.stats.skew` — float. Skewness.
+- `data.stats.kurtosis` — float. Kurtosis (non-Fisher).
+- `data.stats.range` — float. Peak-to-peak amplitude.
 
 > The `data.stats.*` entries are computed during pre-analysis by **`p0.compute_and_write_data_stats`**.
 
@@ -226,4 +226,3 @@ Plot the PDFs of medium, system and total entropy, using the data from `entropie
 
 #### `compute_entropy_w_steps`
 Same as `compute_entropy_ift_opti`, but also stores the cumulative contributions per cascade step; results are saved to `entropies_ift_opti_w_steps.npz`.
-
