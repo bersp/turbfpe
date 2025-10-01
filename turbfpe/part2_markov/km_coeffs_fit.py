@@ -122,7 +122,7 @@ def compute_km_coeffs_fit(
     4) Returns km_coeffs and km_coeffs_noopt
     """
 
-    # --- 1) Data for optimized fits ---
+    # Data for optimized fits
     u_opt, r_opt, D1_opt, D1_err_opt, D2_opt, D2_err_opt = (
         get_Di_for_all_incs_and_scales(
             density_funcs_group,
@@ -133,7 +133,7 @@ def compute_km_coeffs_fit(
         )
     )
 
-    # --- 2) Data for non-optimized fits ---
+    # Data for non-optimized fits
     u_noopt, r_noopt, D1_noopt, D1_err_noopt, D2_noopt, D2_err_noopt = (
         get_Di_for_all_incs_and_scales(
             density_funcs_group,
@@ -144,15 +144,15 @@ def compute_km_coeffs_fit(
         )
     )
 
-    # --- 3) Fit both sets (D1, D2) for optimized
+    # Fit both sets (D1, D2) for optimized
     popt_D1_opt, pcov_D1_opt = fit_D1(u_opt, r_opt, D1_opt, D1_err_opt)
     popt_D2_opt, pcov_D2_opt = fit_D2(u_opt, r_opt, D2_opt, D2_err_opt)
 
-    # --- 3) Fit both sets (D1, D2) for non-optimized
+    # Fit both sets (D1, D2) for non-optimized
     popt_D1_noopt, pcov_D1_noopt = fit_D1(u_noopt, r_noopt, D1_noopt, D1_err_noopt)
     popt_D2_noopt, pcov_D2_noopt = fit_D2(u_noopt, r_noopt, D2_noopt, D2_err_noopt)
 
-    # --- 4) Extract best-fit parameters ---
+    # Extract best-fit parameters ---
 
     # Compute 95% intervals for the "optimized" fits
     D1_conf_opt, D2_conf_opt = None, None
