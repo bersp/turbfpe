@@ -1,24 +1,27 @@
-from matplotlib.lines import Line2D
+import warnings
+
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.lines import Line2D
 from tqdm import tqdm
 
 from .markov_auxiliar_functions import (
     calc_incs_3tau,
-    compute_indep_incs_non_square_data,
     compute_indep_incs,
+    compute_indep_incs_non_square_data,
     distribution,
 )
 
 SQRT_2_DIV_PI = np.sqrt(2 / np.pi)
 
 
-def compute_wilcoxon_test(data, fs, nbins, taylor_hyp_vel, indep_scale, end_scale, n_interv_sec=1):
-
-    to_us = fs / taylor_hyp_vel # convert to unit of samples
+def compute_wilcoxon_test(
+    data, fs, nbins, taylor_hyp_vel, indep_scale, end_scale, n_interv_sec=1
+):
+    to_us = fs / taylor_hyp_vel  # convert to unit of samples
 
     # number of statistically independent intervals
-    indep_scale_us = round(indep_scale*to_us)
+    indep_scale_us = round(indep_scale * to_us)
     n_interv = data.shape[1] // indep_scale_us - 1
 
     # calculate delta_arr_us (in unit of samples)
@@ -34,11 +37,9 @@ def compute_wilcoxon_test(data, fs, nbins, taylor_hyp_vel, indep_scale, end_scal
     delta_arr_us = np.unique(np.floor(delta_arr_us).astype(int))
     delta_arr_us = delta_arr_us[delta_arr_us != 0]
 
-
     # calculate where starts the independent intervals
     start_interv_idx = np.arange(0, indep_scale_us * n_interv, indep_scale_us)
 
-    
     if n_interv_sec >= indep_scale_us:
         raise ValueError("n_inter_sec shoud be smallen than indep_scale_us")
 
@@ -49,14 +50,18 @@ def compute_wilcoxon_test(data, fs, nbins, taylor_hyp_vel, indep_scale, end_scal
     ]
 
     wt_arr = np.zeros((len(start_interv_sec_list), delta_arr_us.size))
-    for ii, delta in enumerate(tqdm(delta_arr_us)):
+    for ii, delta in enumerate(
+        tqdm(
+            delta_arr_us,
+            desc="# Δ ",
+            bar_format=r"{desc}: |{bar}{r_bar}",
+        )
+    ):
         for jj, start_interv_sec in enumerate(start_interv_sec_list):
             # do the wilcoxon test for the delta selected
             # at different independent intervals.
 
-            inc0, inc1, inc2 = compute_indep_incs(
-                data, start_interv_sec, delta
-            )
+            inc0, inc1, inc2 = compute_indep_incs(data, start_interv_sec, delta)
 
             # bins1
             count1, bins1_tmp = np.histogram(inc1, bins=nbins)
@@ -68,7 +73,7 @@ def compute_wilcoxon_test(data, fs, nbins, taylor_hyp_vel, indep_scale, end_scal
 
             # bin0 (only one, i.e. idx_c0)
             # idx_c0 = np.abs(inc0) < bins1_width / 2
-            idx_c0 = np.abs(inc0) < 2*bins1_width
+            idx_c0 = np.abs(inc0) < 2 * bins1_width
 
             # mean of the wilcoxon test stats over all bins1
             tmp = wilcoxon_test_multiple_bins(inc1, inc2, bins1, idx_c0)
@@ -124,7 +129,11 @@ def wilcoxon_test_multiple_bins(inc1, inc2, bins1, idx_c0):
         # - test if P(u_2|u_1,u_0=0) is compatible with P(u_2|u_1)
         T = wilcoxon_test_2samp(inc2_c1, inc2_c1_c0)
         T_list.append(T)
-    return np.mean(T_list)
+
+    if len(T_list) == 0:
+        return np.nan
+    else:
+        return np.mean(T_list)
 
 
 def plot_wilcoxon_test(data, delta_arr_us, wt_arr, markov_scale_us):
@@ -139,8 +148,10 @@ def plot_wilcoxon_test(data, delta_arr_us, wt_arr, markov_scale_us):
     for i, wt in enumerate(wt_arr):
         ax1.loglog(delta_arr_us, wt, ".k", alpha=0.2)
 
+    with warnings.catch_warnings():  # some rows may contain only nans; that's ok
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        wt_arr_mean = np.nanmean(wt_arr, axis=0)
 
-    wt_arr_mean = np.nanmean(wt_arr, axis=0)
     ax1.loglog(delta_arr_us, wt_arr_mean, "o", color="#C95E61", lw=2, ms=5)
 
     ax1.legend()

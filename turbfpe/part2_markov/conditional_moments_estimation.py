@@ -50,7 +50,11 @@ def compute_conditional_moments_estimation(
 
     cond_moments_group = ConditionalMomentsGroup()
     density_funcs_group = DensityFunctionsGroup()
-    for scale_idx in tqdm(range(scales.size)):
+    for scale_idx in tqdm(
+        range(scales.size),
+        desc="# scales",
+        bar_format=r"{desc}: |{bar}{r_bar}",
+    ):
         scale_us = scales_us[scale_idx]
 
         # Initialize variables for storing computation results
