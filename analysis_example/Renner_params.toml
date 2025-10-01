@@ -34,9 +34,11 @@ part3_entropy = [
   "compute_entropy_ift_opti",
   "plot_entropy_ift_opti",
 
-  "compute_km_coeffs_dft_opti",
-  "compute_entropy_dft_opti",
-  "plot_entropy_dft_opti",
+  # "compute_km_coeffs_dft_opti",
+  # "compute_entropy_dft_opti",
+  # "plot_entropy_dft_opti",
+
+  # "compute_entropy_ift_opti_w_steps"
 ]
 
 [data]
@@ -189,3 +191,6 @@ nbins          = "!auto"  # int or auto.
 [p3.plot_entropy_dft_opti]
   # uses -> entropies_dft_opti.npz and
   nbins = 300  # int.
+
+[p3.compute_entropy_w_steps]
+  # writes -> entropies_(stp|ift|dft)_opti_w_steps.npz.
