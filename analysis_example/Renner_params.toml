@@ -49,7 +49,7 @@ shape               = "!auto"                       # str.
 [config.io]
 processed_data_save_path = "processed_data/"  # str.
 figures_save_path        = "figures/"         # str.
-save_filenames_prefix    = "Renner"                     # str.
+save_filenames_prefix    = "Renner"           # str.
 
 [config.mpl]
 usetex             = true   # bool.
@@ -151,13 +151,11 @@ nbins          = "!auto"  # int or auto.
   smallest_scale          = "!auto"  # float or auto.
   largest_scale           = "!auto"  # float or auto.
   scale_subsample_step_us = "!auto"  # int or auto.
-  overlap_trajs_flag      = true     # bool.
-  available_ram_gb        = 4.0      # float.
 
 [p3.compute_km_coeffs_ift_opti]
   # uses -> km_coeffs_stp_opti.npz, km_coeffs_estimation.npz (only to get the scales),
   #         p3.general.smallest_scale, p3.general.largest_scale,
-  #         p3.general.scale_subsample_step_us, p3.general.available_ram_gb,
+  #         p3.general.scale_subsample_step_us,
   #         general.fs, general.taylor_scale, general.taylor_hyp_vel and
   tol_D1    = 0.1  # float.
   tol_D2    = 0.1  # float.
@@ -166,29 +164,28 @@ nbins          = "!auto"  # int or auto.
 [p3.compute_km_coeffs_dft_opti]
   # uses -> km_coeffs_stp_opti.npz, km_coeffs_estimation.npz (only to get the scales),
   #         p3.general.smallest_scale, p3.general.largest_scale,
-  #         p3.general.scale_subsample_step_us, p3.general.available_ram_gb,
+  #         p3.general.scale_subsample_step_us,
   #         general.fs, general.taylor_scale, general.taylor_hyp_vel and
   tol_D1    = 0.1  # float.
   tol_D2    = 0.1  # float.
   iter_max  = 1    # int.
 
 [p3.compute_entropy]
-  # uses -> km_coeffs_(stp|ift)_opti.npz and
+  # uses -> km_coeffs_(stp|ift|dft)_opti.npz and
   #         p3.general.smallest_scale, p3.general.largest_scale,
-  #         p3.general.scale_subsample_step_us, p3.general.overlap_trajs_flag,
-  #         p3.available_ram_gb and
+  #         p3.general.scale_subsample_step_us and
   #         general.fs, general.taylor_scale, general.taylor_hyp_vel.
 
-  # writes -> entropies_(stp|ift)_opti.npy.
+  # writes -> entropies_(stp|ift|dft)_opti.npz.
 
 [p3.plot_entropy_stp_opti]
-  # uses -> entropies_stp_opti.npy and
+  # uses -> entropies_stp_opti.npz and
   nbins = 300  # int.
 
 [p3.plot_entropy_ift_opti]
-  # uses -> entropies_ift_opti.npy and
+  # uses -> entropies_ift_opti.npz and
   nbins = 300  # int.
 
 [p3.plot_entropy_dft_opti]
-  # uses -> entropies_ift_opti.npy and
+  # uses -> entropies_dft_opti.npz and
   nbins = 300  # int.
