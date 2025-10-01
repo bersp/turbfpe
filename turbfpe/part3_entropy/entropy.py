@@ -1,9 +1,15 @@
 from __future__ import print_function
 
+import time
+
 import matplotlib.pyplot as plt
 import numpy as np
 
-from ..utils.logger_setup import logger
+from ..utils.logger_setup import (
+    format_routine_done_log,
+    format_routine_start_log,
+    logger,
+)
 from ..utils.mpl_utils import mpl_setup, save_fig
 from ..utils.parameters_utils import Params, trim_data
 from ..utils.storing_clases import Entropies, KMCoeffs, KMCoeffsEstimationGroup
@@ -23,14 +29,24 @@ def exec_routine(params_file):
     data = params.load_data()
 
     for func_str in params.read("routine.part3_entropy"):
-        logger.info("-" * 80)
-        logger.info(f"----- START {func_str} (PART 3)")
+        data_name = params.read("config.io.save_filenames_prefix")
+        logger.info(
+            format_routine_start_log(partn=3, func_str=func_str, data_name=data_name)
+        )
 
+        t0 = time.perf_counter()
         func = globals()[f"{func_str}_params"]
-        func(data=data, params=params)
+        func(data, params=params)
+        elapsed_time = time.perf_counter() - t0
 
-        logger.info(f"----- END {func_str} (PART 3)")
-        logger.info("-" * 80)
+        logger.info(
+            format_routine_done_log(
+                partn=3,
+                func_str=func_str,
+                data_name=data_name,
+                elapsed_time=elapsed_time,
+            )
+        )
 
 
 def compute_entropy_autovalues_params(_, params):

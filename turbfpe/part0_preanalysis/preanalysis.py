@@ -1,7 +1,13 @@
+import time
+
 import numpy as np
 import scipy.stats as stats
 
-from ..utils.logger_setup import logger
+from ..utils.logger_setup import (
+    format_routine_done_log,
+    format_routine_start_log,
+    logger,
+)
 from ..utils.parameters_utils import Params
 from .preanalysis_functions import compute_int_scale
 
@@ -13,14 +19,24 @@ def exec_routine(params_file):
     data = data.compressed()
 
     for func_str in params.read("routine.part0_preanalysis"):
-        logger.info("-" * 80)
-        logger.info(f"----- START {func_str} (PART 0)")
+        data_name = params.read("config.io.save_filenames_prefix")
+        logger.info(
+            format_routine_start_log(partn=0, func_str=func_str, data_name=data_name)
+        )
 
+        t0 = time.perf_counter()
         func = globals()[f"{func_str}_params"]
-        func(data=data, params=params)
+        func(data, params=params)
+        elapsed_time = time.perf_counter() - t0
 
-        logger.info(f"----- END {func_str} (PART 0)")
-        logger.info("-" * 80)
+        logger.info(
+            format_routine_done_log(
+                partn=0,
+                func_str=func_str,
+                data_name=data_name,
+                elapsed_time=elapsed_time,
+            )
+        )
 
 
 def compute_int_scale_params(data, params: Params):
