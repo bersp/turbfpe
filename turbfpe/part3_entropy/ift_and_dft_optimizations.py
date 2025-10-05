@@ -4,7 +4,7 @@ from scipy.optimize import curve_fit, minimize
 from ..utils.logger_setup import logger
 from ..utils.storing_clases import KMCoeffs
 from ..utils.general import get_pdf
-from .entropy_computation import compute_entropy
+from .entropy_computation import compute_scales, compute_entropies_for_all_scales
 
 
 # IFT Opti
@@ -60,6 +60,16 @@ def compute_km_coeffs_ift_opti(
     # sometimes lower and upper are numbers very close to 0 but they are in the wrong order
     upper_bound = np.maximum(upper_bound, lower_bound)
 
+    scales_data = compute_scales(
+        data,
+        fs,
+        smallest_scale,
+        largest_scale,
+        scale_subsample_step_us,
+        taylor_scale,
+        taylor_hyp_vel,
+    )
+
     _, optimization_history = ift_run_optimization(
         x0,
         lower_bound,
@@ -68,13 +78,7 @@ def compute_km_coeffs_ift_opti(
         scales_dimless,
         n_scales,
         km_coeffs_stp_opti,
-        largest_scale,
-        smallest_scale,
-        data,
-        fs,
-        scale_subsample_step_us,
-        taylor_scale,
-        taylor_hyp_vel,
+        scales_data,
     )
     history_fval = np.array(optimization_history["error"])
     best_index = np.argmin(history_fval)
@@ -106,18 +110,20 @@ def ift_objective_function(
     x0,
     scales_dimless,
     n_scales,
-    km_coeffs,
-    largest_scale,
-    smallest_scale,
-    data,
-    fs,
-    scale_subsample_step_us,
-    taylor_scale,
-    taylor_hyp_vel,
+    km_coeffs_ref,
+    scales_data,
 ):
+    (
+        incs_for_all_scales,
+        indep_scales,
+        scale_subsample_step_us,
+        indep_scales_idxs,
+        traj_start_pairs,
+    ) = scales_data
+
     # Fit parameters.
-    popt_d11 = fit_d1j(scales_dimless, x0[:n_scales], km_coeffs)
-    popt_d20, popt_d21, popt_d22 = fit_d2j(scales_dimless, x0, n_scales, km_coeffs)
+    popt_d11 = fit_d1j(scales_dimless, x0[:n_scales], km_coeffs_ref)
+    popt_d20, popt_d21, popt_d22 = fit_d2j(scales_dimless, x0, n_scales, km_coeffs_ref)
 
     # Create km_coeffs object.
     km_coeffs = KMCoeffs(
@@ -136,16 +142,14 @@ def ift_objective_function(
     )
 
     # Compute entropy.
-    _, _, total_entropy, _ = compute_entropy(
-        data,
-        km_coeffs,
-        fs,
-        smallest_scale,
-        largest_scale,
-        scale_subsample_step_us,
-        taylor_scale,
-        taylor_hyp_vel,
-        return_raw_arrays=True,
+    _, _, total_entropy, _ = compute_entropies_for_all_scales(
+        km_coeffs=km_coeffs,
+        incs_for_all_scales=incs_for_all_scales,
+        indep_scales=indep_scales,
+        scale_subsample_step_us=scale_subsample_step_us,
+        indep_scales_idxs=indep_scales_idxs,
+        traj_start_pairs=traj_start_pairs,
+        compute_entropy_steps=False,
     )
 
     # Remove values that would cause overflow in exp(-total_entropy).
@@ -190,13 +194,7 @@ def ift_run_optimization(
     scales_dimless,
     n_scales,
     km_coeffs,
-    largest_scale,
-    smallest_scale,
-    data,
-    fs,
-    scale_subsample_step_us,
-    taylor_scale,
-    taylor_hyp_vel,
+    scales_data,
 ):
     bounds = [(_l, _u) for _l, _u in zip(lower_bound, upper_bound)]
     optimization_history = {"x_iter": [], "error": [], "ift": []}
@@ -207,13 +205,7 @@ def ift_run_optimization(
             scales_dimless,
             n_scales,
             km_coeffs,
-            largest_scale,
-            smallest_scale,
-            data,
-            fs,
-            scale_subsample_step_us,
-            taylor_scale,
-            taylor_hyp_vel,
+            scales_data,
         )
         optimization_history["x_iter"].append(np.copy(x))
         optimization_history["error"].append(error)
@@ -297,6 +289,16 @@ def compute_km_coeffs_dft_opti(
     # sometimes lower and upper are numbers very close to 0 but they are in the wrong order
     upper_bound = np.maximum(upper_bound, lower_bound)
 
+    scales_data = compute_scales(
+        data,
+        fs,
+        smallest_scale,
+        largest_scale,
+        scale_subsample_step_us,
+        taylor_scale,
+        taylor_hyp_vel,
+    )
+
     _, optimization_history = dft_run_optimization(
         x0,
         lower_bound,
@@ -305,13 +307,7 @@ def compute_km_coeffs_dft_opti(
         scales_dimless,
         n_scales,
         km_coeffs_stp_opti,
-        largest_scale,
-        smallest_scale,
-        data,
-        fs,
-        scale_subsample_step_us,
-        taylor_scale,
-        taylor_hyp_vel,
+        scales_data,
     )
     history_fval = np.array(optimization_history["error"])
     best_index = np.argmin(history_fval)
@@ -343,18 +339,20 @@ def dft_objective_function(
     x0,
     scales_dimless,
     n_scales,
-    km_coeffs,
-    largest_scale,
-    smallest_scale,
-    data,
-    fs,
-    scale_subsample_step_us,
-    taylor_scale,
-    taylor_hyp_vel,
+    km_coeffs_ref,
+    scales_data,
 ):
+    (
+        incs_for_all_scales,
+        indep_scales,
+        scale_subsample_step_us,
+        indep_scales_idxs,
+        traj_start_pairs,
+    ) = scales_data
+
     # Fit parameters.
-    popt_d11 = fit_d1j(scales_dimless, x0[:n_scales], km_coeffs)
-    popt_d20, popt_d21, popt_d22 = fit_d2j(scales_dimless, x0, n_scales, km_coeffs)
+    popt_d11 = fit_d1j(scales_dimless, x0[:n_scales], km_coeffs_ref)
+    popt_d20, popt_d21, popt_d22 = fit_d2j(scales_dimless, x0, n_scales, km_coeffs_ref)
 
     # Create km_coeffs object.
     km_coeffs = KMCoeffs(
@@ -373,16 +371,14 @@ def dft_objective_function(
     )
 
     # Compute entropy.
-    _, _, total_entropy, _ = compute_entropy(
-        data,
-        km_coeffs,
-        fs,
-        smallest_scale,
-        largest_scale,
-        scale_subsample_step_us,
-        taylor_scale,
-        taylor_hyp_vel,
-        return_raw_arrays=True,
+    _, _, total_entropy, _ = compute_entropies_for_all_scales(
+        km_coeffs=km_coeffs,
+        incs_for_all_scales=incs_for_all_scales,
+        indep_scales=indep_scales,
+        scale_subsample_step_us=scale_subsample_step_us,
+        indep_scales_idxs=indep_scales_idxs,
+        traj_start_pairs=traj_start_pairs,
+        compute_entropy_steps=False,
     )
     total_entropy = total_entropy[~np.isnan(total_entropy)]
 
@@ -426,13 +422,7 @@ def dft_run_optimization(
     scales_dimless,
     n_scales,
     km_coeffs,
-    largest_scale,
-    smallest_scale,
-    data,
-    fs,
-    scale_subsample_step_us,
-    taylor_scale,
-    taylor_hyp_vel,
+    scales_data,
 ):
     bounds = [(_l, _u) for _l, _u in zip(lower_bound, upper_bound)]
     optimization_history = {"x_iter": [], "error": []}
@@ -443,13 +433,7 @@ def dft_run_optimization(
             scales_dimless,
             n_scales,
             km_coeffs,
-            largest_scale,
-            smallest_scale,
-            data,
-            fs,
-            scale_subsample_step_us,
-            taylor_scale,
-            taylor_hyp_vel,
+            scales_data,
         )
         optimization_history["x_iter"].append(np.copy(x))
         optimization_history["error"].append(error)

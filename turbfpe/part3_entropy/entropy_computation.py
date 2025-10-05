@@ -15,7 +15,6 @@ def compute_entropy(
     taylor_scale,
     taylor_hyp_vel,
     compute_entropy_steps=False,
-    return_raw_arrays=False,
 ):
     (
         incs_for_all_scales,
@@ -44,16 +43,13 @@ def compute_entropy(
             compute_entropy_steps=compute_entropy_steps,
         )
     )
-    if return_raw_arrays:
-        return medium_entropy, system_entropy, total_entropy, idx_track
-    else:
-        entropies = Entropies(
-            medium_entropy=medium_entropy,
-            system_entropy=system_entropy,
-            total_entropy=total_entropy,
-            idx_track=idx_track,
-        )
-        return entropies
+    entropies = Entropies(
+        medium_entropy=medium_entropy,
+        system_entropy=system_entropy,
+        total_entropy=total_entropy,
+        idx_track=idx_track,
+    )
+    return entropies
 
 
 def compute_scales(
