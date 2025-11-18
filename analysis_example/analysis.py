@@ -5,7 +5,7 @@ from turbfpe.part3_entropy import entropy
 
 params_filename = './Renner_params.toml'
 
-preanalysis.exec_rutine(params_filename)
-turbulence_analysis.exec_rutine(params_filename)
-markov.exec_rutine(params_filename)
-entropy.exec_rutine(params_filename)
+preanalysis.exec_rouine(params_filename)
+turbulence_analysis.exec_rouine(params_filename)
+markov.exec_rouine(params_filename)
+entropy.exec_rouine(params_filename)
