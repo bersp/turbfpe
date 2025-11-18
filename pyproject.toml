@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "turbfpe"
 version = "0.1"
 readme = "README.md"
-dependencies = []
+dependencies = ["numpy", "matplotlib", "scipy", "tomlkit", "tqdm"]
 
 [tool.setuptools.packages.find]
 where = ["."]
