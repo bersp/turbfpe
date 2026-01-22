@@ -45,7 +45,13 @@ def compute_conditional_moments_estimation(
     )
 
     scales_us = np.unique(np.round(scales_tmp / taylor_hyp_vel * fs)).astype(int)
-    scales_us = scales_us[scales_us > steps_con_moment_us[-1]]
+
+    if not np.all(scales_us > steps_con_moment_us[-1]):
+        logger.info("WARNING: some candidate scales were discarded because their minimum required step size exceeds the allowed conditioning range (2ΔEM)")
+    if not np.all(data.shape[1] > scales_us):
+        logger.info(f"WARNING: some candidate scales were discarded because their value is larger than the available data length")
+
+    scales_us = scales_us[(data.shape[1] > scales_us) & (scales_us > steps_con_moment_us[-1])]
     scales = scales_us / fs * taylor_hyp_vel
 
     cond_moments_group = ConditionalMomentsGroup()
