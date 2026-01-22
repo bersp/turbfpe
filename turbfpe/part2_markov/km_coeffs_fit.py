@@ -3,8 +3,8 @@ from __future__ import annotations
 import numpy as np
 from scipy.optimize import curve_fit
 
-from ..utils.storing_clases import KMCoeffs
-from .markov_auxiliar_functions import get_Di_for_all_incs_and_scales
+from ..utils.storing_classes import KMCoeffs
+from .markov_auxiliary_functions import get_Di_for_all_incs_and_scales
 
 
 def model_D1(u, r, a11, c11, b11):

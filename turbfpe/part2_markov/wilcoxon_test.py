@@ -5,7 +5,7 @@ import numpy as np
 from matplotlib.lines import Line2D
 from tqdm import tqdm
 
-from .markov_auxiliar_functions import (
+from .markov_auxiliary_functions import (
     calc_incs_3tau,
     compute_indep_incs,
     compute_indep_incs_non_square_data,

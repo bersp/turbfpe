@@ -10,7 +10,7 @@ from ..utils.logger_setup import (
 )
 from ..utils.mpl_utils import mpl_setup, save_fig
 from ..utils.parameters_utils import Params
-from ..utils.storing_clases import (
+from ..utils.storing_classes import (
     ConditionalMomentsGroup,
     DensityFunctionsGroup,
     KMCoeffs,

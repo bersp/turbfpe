@@ -4,7 +4,7 @@ import numpy as np
 from matplotlib.lines import Line2D
 
 from .km_coeffs_estimation_stp_opti import short_time_prop
-from .markov_auxiliar_functions import get_Di_for_all_incs_and_scales
+from .markov_auxiliary_functions import get_Di_for_all_incs_and_scales
 
 
 def plot_km_coeffs_estimation(km_coeffs_est_group, density_funcs_group, taylor_scale):

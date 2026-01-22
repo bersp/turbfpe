@@ -2,13 +2,13 @@ import numpy as np
 from tqdm import tqdm
 
 from ..utils.logger_setup import logger
-from ..utils.storing_clases import (
+from ..utils.storing_classes import (
     ConditionalMoments,
     ConditionalMomentsGroup,
     DensityFunctions,
     DensityFunctionsGroup,
 )
-from .markov_auxiliar_functions import (
+from .markov_auxiliary_functions import (
     calc_incs_2tau,
     compute_mean_values_per_bin,
     distribution,

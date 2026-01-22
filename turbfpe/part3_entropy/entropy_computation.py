@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 
 from ..utils.logger_setup import logger
-from ..utils.storing_clases import Entropies, KMCoeffs
+from ..utils.storing_classes import Entropies, KMCoeffs
 
 
 def compute_entropy(

@@ -1,6 +1,6 @@
 import numpy as np
 
-from turbfpe.utils.storing_clases import (
+from turbfpe.utils.storing_classes import (
     ConditionalMomentsGroup,
     DensityFunctionsGroup,
     KMCoeffsEstimationGroup,

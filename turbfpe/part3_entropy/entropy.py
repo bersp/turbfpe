@@ -12,7 +12,7 @@ from ..utils.logger_setup import (
 )
 from ..utils.mpl_utils import mpl_setup, save_fig
 from ..utils.parameters_utils import Params, trim_data
-from ..utils.storing_clases import Entropies, KMCoeffs, KMCoeffsEstimationGroup
+from ..utils.storing_classes import Entropies, KMCoeffs, KMCoeffsEstimationGroup
 from .entropy_computation import compute_entropy
 from .ift_and_dft_optimizations import (
     compute_km_coeffs_ift_opti,

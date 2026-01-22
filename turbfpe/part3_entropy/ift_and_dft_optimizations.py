@@ -2,7 +2,7 @@ import numpy as np
 from scipy.optimize import curve_fit, minimize
 
 from ..utils.logger_setup import logger
-from ..utils.storing_clases import KMCoeffs
+from ..utils.storing_classes import KMCoeffs
 from ..utils.general import get_pdf
 from .entropy_computation import compute_scales, compute_entropies_for_all_scales
 
