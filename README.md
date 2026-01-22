@@ -195,6 +195,7 @@ Display the fitted $D^{(1)}$ and $D^{(2)}$ surfaces together with the scatter of
 - `p3.general.smallest_scale` — float or `"auto"` (= `general.taylor_scale`). Minimum cascade scale $s_{\min}$. Physical units.
 - `p3.general.largest_scale` — float or `"auto"` (= `general.int_scale`). Maximum cascade scale $s_{\max}$. Physical units.
 - `p3.general.scale_subsample_step_us` — int or `"auto"` (= `p2.general.markov_scale_us`). Sub-sampling step between scales. Sample units.
+- `p3.general.concatenate_all_trajectories` — bool. When the input is 2-D (multiple realisations), concatenate all valid samples into a single long trajectory before running Part 3 routines. This can increase the number of effective cascade trajectories when the dataset has many short realisations, at the cost of mixing otherwise independent realisations into a single cascade.
 
 #### `compute_km_coeffs_(ift|dft)_opti`
 Refine the short-time–propagator coefficients so that they also satisfy the **integral fluctuation theorem (IFT)** or the **detailed fluctuation theorem (dft)**; the resulting set is saved to `km_coeffs_(ift|dft)_opti.npz`.

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from ..utils.logger_setup import logger
 from ..utils.storing_clases import Entropies, KMCoeffs
 
 
@@ -72,9 +73,8 @@ def compute_scales(
 
     # Find the indices closest to the target scales.
     # For largest_scale, we want the last occurrence of the minimum difference.
-    largest_index = all_indep_scales_dimless.size - np.argmin(
-        np.abs(all_indep_scales_dimless[::-1] - largest_scale_dimless)
-    )
+    rev_idx = np.argmin(np.abs(all_indep_scales_dimless[::-1] - largest_scale_dimless))
+    largest_index = all_indep_scales_dimless.size - 1 - rev_idx
     # For smallest_scale, we take the first occurrence.
     smallest_index = np.argmin(
         np.abs(all_indep_scales_dimless - smallest_scale_dimless)
@@ -197,17 +197,21 @@ def get_non_overlap_idep_incs(
     incs_list = []
     starts_list = []
 
+    trajs_discarted_len = []
+    trajs_tails_discarted_len = []
+    total_valid_samples = 0
     for r in range(n_trajs):
         n_avail = int(valid_len[r])
+        total_valid_samples += n_avail
         if n_avail <= max_offset:
+            trajs_discarted_len.append(n_avail)
             continue
 
         # Non-overlapping starts. Tail is discarded.
         limit = n_avail - max_offset
         starts = np.arange(0, limit, step_size, dtype=int)
 
-        if starts.size == 0:
-            continue
+        trajs_tails_discarted_len.append(n_avail - (starts[-1] + max_offset + 1))
 
         # Build increments for row r
         # Shape: (n_starts, n_full_scales)
@@ -229,6 +233,31 @@ def get_non_overlap_idep_incs(
 
     incs_all = np.vstack(incs_list)
     traj_start_pairs = np.vstack(starts_list)
+
+    n_samples_discarted = sum(trajs_discarted_len) + sum(trajs_tails_discarted_len)
+
+    logger.info(
+        "Discarded samples (short trajectories + discarded tails):: "
+        f"{n_samples_discarted/total_valid_samples:.1%} ({n_samples_discarted:.2E} / {total_valid_samples:.2E})"
+    )
+
+    logger.info(
+        "Discarded trajectories (len(traj) < largest_scale_us): "
+        f"{len(trajs_discarted_len)/n_trajs:.1%} ({len(trajs_discarted_len)} / {n_trajs})"
+    )
+
+    logger.info(
+        f"Discarded samples from truncated tail (sum_traj [len(traj) - N*largest_scale_us]): {sum(trajs_tails_discarted_len):.2E}"
+    )
+
+    logger.info(
+        f"Mean discarded tail per kept trajectory / largest_scale_us: "
+        f"{sum(trajs_tails_discarted_len) / len(trajs_tails_discarted_len) / max_offset:.1%}"
+    )
+
+    logger.info(
+        f"Total number of cascade trajectories: {incs_all.shape[0]}"
+    )
 
     return incs_all, traj_start_pairs
 

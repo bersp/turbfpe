@@ -149,10 +149,11 @@ nbins          = "!auto"  # int or auto.
 
 # – PART 3: Entropy
 [p3.general]
-  prop_to_use             = 1.0      # float (0.0 to 1.0) or [float, float].
-  smallest_scale          = "!auto"  # float or auto.
-  largest_scale           = "!auto"  # float or auto.
-  scale_subsample_step_us = "!auto"  # int or auto.
+  prop_to_use                  = 1.0      # float (0.0 to 1.0) or [float, float].
+  smallest_scale               = "!auto"  # float or auto.
+  largest_scale                = "!auto"  # float or auto.
+  scale_subsample_step_us      = "!auto"  # int or auto.
+  concatenate_all_trajectories = false    # bool
 
 [p3.compute_km_coeffs_ift_opti]
   # uses -> km_coeffs_stp_opti.npz, km_coeffs_estimation.npz (only to get the scales),
@@ -163,6 +164,8 @@ nbins          = "!auto"  # int or auto.
   tol_D2    = 0.1  # float.
   iter_max  = 5    # int.
 
+  # writes -> km_coeffs_ift_opti.npz
+
 [p3.compute_km_coeffs_dft_opti]
   # uses -> km_coeffs_stp_opti.npz, km_coeffs_estimation.npz (only to get the scales),
   #         p3.general.smallest_scale, p3.general.largest_scale,
@@ -171,6 +174,8 @@ nbins          = "!auto"  # int or auto.
   tol_D1    = 0.1  # float.
   tol_D2    = 0.1  # float.
   iter_max  = 1    # int.
+
+  # writes -> km_coeffs_dft_opti.npz
 
 [p3.compute_entropy]
   # uses -> km_coeffs_(stp|ift|dft)_opti.npz and

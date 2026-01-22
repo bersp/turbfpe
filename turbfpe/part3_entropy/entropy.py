@@ -102,6 +102,10 @@ def _compute_entropy_params(data, params, opti_type, compute_entropy_steps):
     taylor_scale = params.read("general.taylor_scale")
     taylor_hyp_vel = params.read("general.taylor_hyp_vel")
 
+    if params.read("p3.general.concatenate_all_trajectories"):
+        data = data.compressed()[np.newaxis, :]
+        data = np.ma.array(data, mask=False)
+
     entropies = compute_entropy(
         data=data,
         km_coeffs=km_coeffs,
@@ -130,6 +134,10 @@ def compute_km_coeffs_ift_opti_params(data, params):
     data = trim_data(data=data, prop_to_use=prop_to_use)
     if not np.all(np.array(prop_to_use) == 1.0):
         logger.info(f"Trimmed data. The new shape is {data.shape}")
+
+    if params.read("p3.general.concatenate_all_trajectories"):
+        data = data.compressed()[np.newaxis, :]
+        data = np.ma.array(data, mask=False)
 
     km_coeffs_stp_opti = KMCoeffs.load_npz(
         params.format_output_filename_for_data("km_coeffs_stp_opti.npz")
@@ -177,6 +185,10 @@ def compute_km_coeffs_dft_opti_params(data, params):
     data = trim_data(data=data, prop_to_use=prop_to_use)
     if not np.all(np.array(prop_to_use) == 1.0):
         logger.info(f"Trimmed data. The new shape is {data.shape}")
+
+    if params.read("p3.general.concatenate_all_trajectories"):
+        data = data.compressed()[np.newaxis, :]
+        data = np.ma.array(data, mask=False)
 
     km_coeffs_stp_opti = KMCoeffs.load_npz(
         params.format_output_filename_for_data("km_coeffs_stp_opti.npz")
