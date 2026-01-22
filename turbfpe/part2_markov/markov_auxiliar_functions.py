@@ -106,10 +106,10 @@ def distribution(x_data, y_data, bins):
     # Compute the marginal probabilities P(A) and P(B)
     P_X = (
         np.sum(P_XnY, axis=1) * bin_y_width
-    )  # Multiply by bin_x_width since integration over y_data
+    )  # Multiply by bin_y_width since integration over y_data
     P_Y = (
         np.sum(P_XnY, axis=0) * bin_x_width
-    )  # Multiply by bin_y_width since integration over x_data
+    )  # Multiply by bin_x_width since integration over x_data
 
     # Avoid division by zero by adding a small epsilon where necessary
     epsilon = np.finfo(float).eps
