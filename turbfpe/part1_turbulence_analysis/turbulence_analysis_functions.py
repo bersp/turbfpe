@@ -66,7 +66,7 @@ def plot_pdf(data, nbins):
 
 
 def plot_spectrum(
-    data, fs, int_scale, taylor_scale, comp_exponent="-5/3", ma_nbins=None
+    data, fs, int_scale, taylor_scale, taylor_hyp_vel, comp_exponent="-5/3", ma_nbins=None
 ):
     # calculate and plot energy spectrum
     esd = np.abs(np.fft.rfft(data, norm="backward")) ** 2 / (data.size * fs)
@@ -116,10 +116,10 @@ def plot_spectrum(
     ax2.axhline(max_ene, ls="--", lw=2, c="#2b3339", label=f"$f^{{{comp_exponent}}}$")
 
     # Integral and taylor "freqs"
-    ax1.axvline(1 / int_scale, lw=2, c="C1", label=r"$L^{-1}$")
-    ax1.axvline(1 / taylor_scale, lw=2, c="C0", label=r"$\lambda^{-1}$")
-    ax2.axvline(1 / int_scale, lw=2, c="C1")
-    ax2.axvline(1 / taylor_scale, lw=2, c="C0")
+    ax1.axvline(taylor_hyp_vel / int_scale, lw=2, c="C1", label=r"$L^{-1}$")
+    ax1.axvline(taylor_hyp_vel / taylor_scale, lw=2, c="C0", label=r"$\lambda^{-1}$")
+    ax2.axvline(taylor_hyp_vel / int_scale, lw=2, c="C1")
+    ax2.axvline(taylor_hyp_vel / taylor_scale, lw=2, c="C0")
 
     for ax in (ax1, ax2):
         ax.grid()
@@ -219,7 +219,3 @@ def compute_taylor_scale(data, fs, ma_nbins):
     ax.legend(loc="lower left")
     ax.loglog()
     ax.set_xlim(f[0], f[-1])
-
-
-if __name__ == "__main__":
-    partI()

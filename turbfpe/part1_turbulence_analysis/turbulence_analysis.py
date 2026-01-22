@@ -99,6 +99,7 @@ def plot_spectrum_params(data, params):
     comp_exponent = params.read("p1.plot_spectrum.comp_exponent")
     int_scale = params.read("general.int_scale")
     taylor_scale = params.read("general.taylor_scale")
+    taylor_hyp_vel = params.read("general.taylor_hyp_vel")
     ma_nbins = params.read("p1.plot_spectrum.moving_average_nbins")
 
     out = plot_spectrum(
@@ -106,6 +107,7 @@ def plot_spectrum_params(data, params):
         fs=fs,
         int_scale=int_scale,
         taylor_scale=taylor_scale,
+        taylor_hyp_vel=taylor_hyp_vel,
         comp_exponent=comp_exponent,
         ma_nbins=ma_nbins,
     )
