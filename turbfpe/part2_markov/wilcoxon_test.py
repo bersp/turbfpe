@@ -207,7 +207,13 @@ def _plot_pdf_on_markov_scale(ax, data, markov_scale_us, u0):
 
     # legend
     legend_elements = [
-        Line2D([0], [0], color="k", lw=3, label="$P(u_2|u_1)$"),
-        Line2D([0], [0], color="C3", lw=3, label=f"$P(u_2|u_1,u_0={u0})$"),
+        Line2D([0], [0], color="k", lw=3, label=r"$P(u_{\tau_2}|u_{\tau_1})$"),
+        Line2D(
+            [0],
+            [0],
+            color="C3",
+            lw=3,
+            label=rf"$P(u_{{\tau_2}}|u_{{\tau_1}},u_{{\tau_0}}={u0})$",
+        ),
     ]
     ax.legend(handles=legend_elements)
